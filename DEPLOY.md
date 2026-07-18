@@ -56,7 +56,7 @@ git remote set-url origin https://github.com/你的用户名/book-notes.git
 ---
 
 ## 以后更新笔记内容
-在微信读书新划了笔记/写了想法，让我重新同步 → 生成新 `data.js` 后，
+在读书平台新划了笔记/写了想法，让我重新同步 → 生成新 `data.js` 后，
 把 `wereading-blog/` 里的文件同步进 `wereading-blog-dist/`，然后：
 
 ```bash
