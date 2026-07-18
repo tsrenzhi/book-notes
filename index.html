@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>读书笔记 · 把读过的书变成自己的认知</title>
+  <meta name="description" content="微信读书笔记的梳理与核心内容展示：书籍分类、读书列表、笔记详情、标签分类。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- 顶部导航 -->
+  <header class="site-header" id="siteHeader">
+    <div class="wrap header-inner">
+      <a href="#/" class="brand">
+        <span class="brand-mark">读</span>
+        <span class="brand-text">
+          <strong id="brandTitle">读书笔记</strong>
+          <em id="brandSub">把读过的书，变成自己的认知</em>
+        </span>
+      </a>
+      <nav class="nav" id="mainNav">
+        <a href="#/" data-route="home">首页</a>
+        <a href="#/books" data-route="books">读书列表</a>
+        <a href="#/categories" data-route="categories">书籍分类</a>
+        <a href="#/tags" data-route="tags">标签</a>
+        <a href="#/about" data-route="about">关于</a>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 主内容区，由 app.js 注入 -->
+  <main id="app" class="app"></main>
+
+  <!-- 页脚 -->
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <p class="footer-motto" id="footerMotto">读书不是为了记住，而是为了成为。</p>
+      <p class="footer-copy">© <span id="footerYear"></span> <span id="footerAuthor">郑辉</span> · 用心记录每一次认知升级</p>
+    </div>
+  </footer>
+
+  <button class="to-top" id="toTop" aria-label="回到顶部">↑</button>
+
+  <script src="vendor/marked.min.js?v=2"></script>
+  <script src="js/data.js?v=2"></script>
+  <script src="js/app.js?v=2"></script>
+</body>
+</html>
