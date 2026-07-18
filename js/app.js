@@ -136,7 +136,7 @@ function viewHome() {
         </div>
         <div class="hero-stats">
           <div class="stat"><strong>${listCount}</strong><span>本精选好书</span></div>
-          <div class="stat"><strong>${totalNotes}</strong><span>条读书笔记</span></div>
+          <div class="stat"><strong>${totalNotes}</strong><span>条笔记</span></div>
         </div>
       </div>
     </div>
@@ -436,7 +436,7 @@ function viewAbout() {
 
         <div class="about-stats">
           <div class="s"><strong>${BOOK_LIST ? BOOK_LIST.length : BOOKS.length}</strong><span>精选好书</span></div>
-          <div class="s"><strong>${allNotes().length}</strong><span>条读书笔记</span></div>
+          <div class="s"><strong>${allNotes().length}</strong><span>条笔记</span></div>
           <div class="s"><strong>${allTags().length}</strong><span>个关注主题</span></div>
         </div>
 
@@ -573,11 +573,11 @@ function viewBlBook(i) {
   const wrNotes = wr && wr.notes ? sortNotesForDisplay(wr.notes) : [];
   const wrSection = wrNotes.length
     ? `<div class="section-head" style="margin-top:44px;margin-bottom:20px">
-         <h2 style="font-size:22px">读书笔记 · ${wrNotes.length} 条</h2>
+         <h2 style="font-size:22px">热门笔记 · ${wrNotes.length} 条</h2>
        </div>
        <div class="note-list">${wrNotes.map((n) => noteItem({ ...n, book: wr })).join("")}</div>`
     : `<div class="section-head" style="margin-top:44px;margin-bottom:20px">
-         <h2 style="font-size:22px">读书笔记</h2>
+         <h2 style="font-size:22px">热门笔记</h2>
        </div>
        ${emptyBlock("这本书还没有笔记～")}`;
 
