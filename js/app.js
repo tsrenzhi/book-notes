@@ -490,14 +490,45 @@ function viewAbout() {
 }
 
 /* ---------- 精选书单（来自飞书书单库 window.BOOK_LIST） ---------- */
-function bookListItem(b) {
+
+/* 飞书书名 → 微信读书笔记 匹配：剥离《》与标点后精确/前缀对齐 */
+function normTitle(s) {
+  return String(s).toLowerCase()
+    .replace(/[《》<>()（）·，。、\-_:：·!！?？"'""'’]/g, "")
+    .replace(/\s+/g, "");
+}
+let _wrTitleMap = null;
+function wrTitleMap() {
+  if (_wrTitleMap) return _wrTitleMap;
+  _wrTitleMap = {};
+  (typeof BOOKS !== "undefined" ? BOOKS : []).forEach((b) => {
+    _wrTitleMap[normTitle(b.title)] = b;
+  });
+  return _wrTitleMap;
+}
+function findWrBook(feishuTitle) {
+  const m = wrTitleMap();
+  const n = normTitle(feishuTitle);
+  if (m[n]) return m[n];
+  for (const k in m) {
+    if (k.startsWith(n) || n.startsWith(k)) return m[k];
+  }
+  return null;
+}
+
+function bookListItem(b, i) {
   const catChips = (b.categories || []).map((c) => `<span class="bl-cat">${esc(c)}</span>`).join("");
   const diff = "●".repeat(b.difficulty || 0) + "○".repeat(5 - (b.difficulty || 0));
+  const wr = findWrBook(b.title);
+  const wrN = wr && wr.notes ? wr.notes.length : 0;
+  const badges = [];
+  if (wrN > 0) badges.push(`<span class="bl-badge wr">📒 微信读书 ${wrN} 条</span>`);
+  if (b.link) badges.push(`<span class="bl-badge gzh">🔗 有解读</span>`);
   const linkBtn = b.link
-    ? `<a class="bl-link" href="${esc(b.link)}" target="_blank" rel="noopener">读解读 →</a>`
+    ? `<a class="bl-link" href="${esc(b.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">读解读 →</a>`
     : "";
   return `
-    <article class="bl-card">
+    <article class="bl-card" onclick="location.hash='#/blbook/${i}'">
       <div class="bl-head">
         <h3 class="bl-title">${esc(b.title)}</h3>
         <span class="bl-score">${stars(b.score || 0)}</span>
@@ -505,6 +536,7 @@ function bookListItem(b) {
       <div class="bl-author">${esc(b.author || "佚名")}</div>
       <div class="bl-cats">${catChips}</div>
       <p class="bl-recommend">${esc(b.recommend || "")}</p>
+      ${badges.length ? `<div class="bl-badges">${badges.join("")}</div>` : ""}
       <div class="bl-foot">
         <span class="bl-diff">阅读难度 ${diff}</span>
         ${linkBtn}
@@ -549,8 +581,8 @@ function initBookList() {
   const render = (cat) => {
     const list = cat === "all" ? BOOK_LIST : BOOK_LIST.filter((b) => (b.categories || []).includes(cat));
     if (!list.length) { grid.innerHTML = emptyBlock("这个分类下还没有书"); if (pager) pager.innerHTML = ""; return; }
-    if (list.length <= 24) { grid.innerHTML = list.map(bookListItem).join(""); if (pager) pager.innerHTML = ""; return; }
-    mountPaged(grid, pager, list.map(bookListItem), 24);
+    if (list.length <= 24) { grid.innerHTML = list.map((b, i) => bookListItem(b, i)).join(""); if (pager) pager.innerHTML = ""; return; }
+    mountPaged(grid, pager, list.map((b, i) => bookListItem(b, i)), 24);
   };
   render("all");
   bar.addEventListener("click", (e) => {
@@ -560,6 +592,48 @@ function initBookList() {
     chip.classList.add("active");
     render(chip.dataset.cat);
   });
+}
+
+/* 飞书书单 → 单本书聚合页：推荐语 + 公众号链接 + 微信读书笔记 */
+function viewBlBook(i) {
+  const b = (typeof BOOK_LIST !== "undefined" && BOOK_LIST[i]) || null;
+  if (!b) return notFound();
+  const catChips = (b.categories || []).map((c) => `<span class="bl-cat">${esc(c)}</span>`).join("");
+  const diff = "●".repeat(b.difficulty || 0) + "○".repeat(5 - (b.difficulty || 0));
+  const isGzh = /mp\.weixin\.qq\.com/.test(b.link || "");
+  const linkBtn = b.link
+    ? `<a class="bl-gzh-btn" href="${esc(b.link)}" target="_blank" rel="noopener">${isGzh ? "📱 读我的公众号解读 →" : "📄 读我的飞书笔记 →"}</a>`
+    : "";
+  const wr = findWrBook(b.title);
+  const wrNotes = wr && wr.notes ? sortNotesForDisplay(wr.notes) : [];
+  const wrSection = wrNotes.length
+    ? `<div class="section-head" style="margin-top:44px;margin-bottom:20px">
+         <h2 style="font-size:22px">微信读书笔记 · ${wrNotes.length} 条</h2>
+       </div>
+       <div class="note-list">${wrNotes.map((n) => noteItem({ ...n, book: wr })).join("")}</div>`
+    : `<div class="section-head" style="margin-top:44px;margin-bottom:20px">
+         <h2 style="font-size:22px">微信读书笔记</h2>
+       </div>
+       ${emptyBlock("这本书在微信读书里还没划线或写想法～")}`;
+  return `
+  <section class="section wrap fade-in">
+    <div class="crumb"><a href="#/booklist">精选书单</a><span>›</span>${esc(b.title)}</div>
+    <div class="bl-detail-hero">
+      <h1>${esc(b.title)}</h1>
+      <div class="bl-detail-meta">
+        <span>${esc(b.author || "佚名")}</span>
+        <span class="bl-score">${stars(b.score || 0)}</span>
+        <span>阅读难度 ${diff}</span>
+      </div>
+      <div class="bl-cats">${catChips}</div>
+    </div>
+    <div class="bl-rec-block">
+      <div class="bl-rec-label">为什么推荐这本书</div>
+      <p class="bl-recommend-full">${esc(b.recommend || "（暂无推荐语）")}</p>
+    </div>
+    ${linkBtn ? `<div class="bl-gzh-wrap">${linkBtn}</div>` : ""}
+    ${wrSection}
+  </section>`;
 }
 
 /* ---------- 通用块 ---------- */
@@ -592,6 +666,7 @@ function router() {
       case "book":        html = viewBook(parts[1]); route = "book"; break;
       case "note":        html = viewNote(parts[1]); route = "note"; break;
       case "booklist":    html = viewBookList(); route = "booklist"; break;
+      case "blbook":      html = viewBlBook(parseInt(parts[1], 10)); route = "blbook"; break;
       case "about":       html = viewAbout(); route = "about"; break;
       default:            html = notFound();
     }

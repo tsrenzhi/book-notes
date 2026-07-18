@@ -300,6 +300,24 @@ a { color: inherit; text-decoration: none; }
 .bl-diff { font-size: 12px; color: var(--ink-faint); letter-spacing: 2px; }
 .bl-link { font-size: 13px; color: var(--accent); font-weight: 600; text-decoration: none; }
 .bl-link:hover { text-decoration: underline; }
+.bl-card { cursor: pointer; }
+.bl-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.bl-badge { font-size: 11.5px; padding: 3px 9px; border-radius: 999px; font-weight: 600; }
+.bl-badge.wr { background: #fff3e6; color: #c4621a; }
+.bl-badge.gzh { background: #e8f3ff; color: #1a73c4; }
+
+/* 飞书书单 → 单本书聚合页 */
+.bl-detail-hero { padding: 8px 0 4px; }
+.bl-detail-hero h1 { font-family: var(--serif); font-size: 30px; line-height: 1.25; margin-bottom: 12px; }
+.bl-detail-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-size: 14px; color: var(--ink-faint); }
+.bl-detail-meta .bl-score { color: var(--accent); letter-spacing: 1px; }
+.bl-rec-block { margin-top: 26px; padding: 22px 24px; background: var(--paper-2, #faf6ef); border-left: 4px solid var(--accent); border-radius: 12px; }
+.bl-rec-label { font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 1px; margin-bottom: 10px; }
+.bl-recommend-full { font-size: 16px; color: var(--ink-soft); line-height: 1.92; margin: 0; }
+.bl-gzh-wrap { margin-top: 26px; }
+.bl-gzh-btn { display: inline-block; padding: 13px 22px; border-radius: 12px; background: linear-gradient(135deg, #07c160, #06ad56); color: #fff; font-weight: 700; font-size: 15px; text-decoration: none; box-shadow: 0 6px 18px rgba(7,193,96,.28); }
+.bl-gzh-btn:hover { filter: brightness(1.05); }
+.bl-gzh-btn:active { transform: translateY(1px); }
 
 /* ---------- 关于页 ---------- */
 .about { max-width: 720px; margin: 0 auto; }
