@@ -1,5 +1,5 @@
 /* ============================================================
-   读书笔记博客 · 应用逻辑（hash 路由 SPA）
+   微信读书笔记博客 · 应用逻辑（hash 路由 SPA）
    路由表：
      #/                首页
      #/books           读书列表
@@ -9,6 +9,7 @@
      #/tag/:name       某标签下的笔记
      #/book/:id        某本书详情（含笔记列表）
      #/note/:id        笔记详情（Markdown 渲染）
+     #/booklist        精选书单（来自飞书书单库）
      #/about           关于
    ============================================================ */
 
@@ -181,6 +182,17 @@ function viewHome() {
     </div>
     <div class="book-grid stagger" id="shelfGrid"></div>
     <div class="pager-wrap" id="shelfPager"></div>
+  </section>
+
+  <section class="section wrap" style="padding-top:0">
+    <div class="section-head">
+      <span class="eyebrow">Curated List</span>
+      <h2>精选书单</h2>
+      <p>我亲手挑过、真受益的 ${typeof BOOK_LIST !== "undefined" ? BOOK_LIST.length : 0} 本，按主题分类，每本附一句推荐理由。</p>
+    </div>
+    <div style="text-align:center;padding:8px 0 4px">
+      <a class="btn btn-primary" href="#/booklist">进入精选书单 →</a>
+    </div>
   </section>`;
 
   // 供 initHome 分页使用：书架优先展示有笔记的书
@@ -382,7 +394,7 @@ function initBook() {
   const list = document.getElementById("bookNotes");
   const pager = document.getElementById("bookNotesPager");
   if (!list || !b) return;
-  if (!b.notes.length) { list.innerHTML = emptyBlock("这本书还没划线或写想法～"); return; }
+  if (!b.notes.length) { list.innerHTML = emptyBlock("这本书在微信读书里还没划线或写想法～"); return; }
   
   const sorted = sortNotesForDisplay(b.notes);
   // 少量笔记直接渲染（更稳），大量才走分页
@@ -477,6 +489,79 @@ function viewAbout() {
   </section>`;
 }
 
+/* ---------- 精选书单（来自飞书书单库 window.BOOK_LIST） ---------- */
+function bookListItem(b) {
+  const catChips = (b.categories || []).map((c) => `<span class="bl-cat">${esc(c)}</span>`).join("");
+  const diff = "●".repeat(b.difficulty || 0) + "○".repeat(5 - (b.difficulty || 0));
+  const linkBtn = b.link
+    ? `<a class="bl-link" href="${esc(b.link)}" target="_blank" rel="noopener">读解读 →</a>`
+    : "";
+  return `
+    <article class="bl-card">
+      <div class="bl-head">
+        <h3 class="bl-title">${esc(b.title)}</h3>
+        <span class="bl-score">${stars(b.score || 0)}</span>
+      </div>
+      <div class="bl-author">${esc(b.author || "佚名")}</div>
+      <div class="bl-cats">${catChips}</div>
+      <p class="bl-recommend">${esc(b.recommend || "")}</p>
+      <div class="bl-foot">
+        <span class="bl-diff">阅读难度 ${diff}</span>
+        ${linkBtn}
+      </div>
+    </article>`;
+}
+
+function viewBookList() {
+  // 聚合书单分类与数量
+  const catSet = {};
+  BOOK_LIST.forEach((b) => (b.categories || []).forEach((c) => (catSet[c] = (catSet[c] || 0) + 1)));
+  const cats = [["all", "全部"]].concat(
+    Object.entries(catSet)
+      .sort((a, b) => b[1] - a[1])
+      .map(([c, n]) => [c, `${c} ${n}`])
+  );
+  return `
+  <section class="section wrap fade-in">
+    <div class="section-head">
+      <span class="eyebrow">Book List</span>
+      <h2>精选书单</h2>
+      <p>我亲手挑过、也真受益的书，按主题分类，每本附一句为什么值得读。</p>
+    </div>
+    <div class="filter-bar" id="blFilter">
+      ${cats
+        .map(
+          ([id, label]) =>
+            `<span class="chip ${id === "all" ? "active" : ""}" data-cat="${esc(id)}">${esc(label)}</span>`
+        )
+        .join("")}
+    </div>
+    <div class="bl-grid stagger" id="blGrid"></div>
+    <div class="pager-wrap" id="blPager"></div>
+  </section>`;
+}
+
+function initBookList() {
+  const bar = document.getElementById("blFilter");
+  const grid = document.getElementById("blGrid");
+  const pager = document.getElementById("blPager");
+  if (!bar || !grid || typeof BOOK_LIST === "undefined") return;
+  const render = (cat) => {
+    const list = cat === "all" ? BOOK_LIST : BOOK_LIST.filter((b) => (b.categories || []).includes(cat));
+    if (!list.length) { grid.innerHTML = emptyBlock("这个分类下还没有书"); if (pager) pager.innerHTML = ""; return; }
+    if (list.length <= 24) { grid.innerHTML = list.map(bookListItem).join(""); if (pager) pager.innerHTML = ""; return; }
+    mountPaged(grid, pager, list.map(bookListItem), 24);
+  };
+  render("all");
+  bar.addEventListener("click", (e) => {
+    const chip = e.target.closest(".chip");
+    if (!chip) return;
+    bar.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
+    chip.classList.add("active");
+    render(chip.dataset.cat);
+  });
+}
+
 /* ---------- 通用块 ---------- */
 function emptyBlock(msg) {
   return `<div class="empty"><div class="e-emoji">📭</div><p>${esc(msg)}</p></div>`;
@@ -506,6 +591,7 @@ function router() {
       case "tag":         html = viewTag(parts[1]); route = "tags"; break;
       case "book":        html = viewBook(parts[1]); route = "book"; break;
       case "note":        html = viewNote(parts[1]); route = "note"; break;
+      case "booklist":    html = viewBookList(); route = "booklist"; break;
       case "about":       html = viewAbout(); route = "about"; break;
       default:            html = notFound();
     }
@@ -525,6 +611,7 @@ function router() {
   if (route === "category") initCategory();
   if (route === "tag") initTag();
   if (route === "book") initBook();
+  if (route === "booklist") initBookList();
 
   // 关闭移动端菜单
   document.getElementById("mainNav").classList.remove("open");
