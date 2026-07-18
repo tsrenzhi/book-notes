@@ -1,5 +1,5 @@
 /* ============================================================
-   微信读书笔记博客 · 应用逻辑（hash 路由 SPA）
+   读书笔记博客 · 应用逻辑（hash 路由 SPA）
    路由表：
      #/                首页
      #/books           读书列表
@@ -382,7 +382,7 @@ function initBook() {
   const list = document.getElementById("bookNotes");
   const pager = document.getElementById("bookNotesPager");
   if (!list || !b) return;
-  if (!b.notes.length) { list.innerHTML = emptyBlock("这本书在微信读书里还没划线或写想法～"); return; }
+  if (!b.notes.length) { list.innerHTML = emptyBlock("这本书还没划线或写想法～"); return; }
   
   const sorted = sortNotesForDisplay(b.notes);
   // 少量笔记直接渲染（更稳），大量才走分页
