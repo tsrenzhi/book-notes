@@ -121,39 +121,23 @@ function noteItem(n) {
 function viewHome() {
   const notes = allNotes().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   const recent = notes.slice(0, 4);
-  const featBooks = BOOKS.slice(0, 3);
   const totalNotes = notes.length;
+  const listCount = typeof BOOK_LIST !== "undefined" ? BOOK_LIST.length : 0;
 
   return `
   <section class="hero wrap fade-in">
-    <div class="hero-inner">
+    <div class="hero-inner" style="grid-template-columns:1fr">
       <div>
         <span class="hero-eyebrow">📖 读书 · 成长 · 认知</span>
         <h1>把读过的书，<br/>沉淀成<span class="hl">自己的认知</span></h1>
         <p class="lead">${esc(SITE.bio)}</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#/books">开始翻书 →</a>
-          <a class="btn btn-ghost" href="#/booklist">逛精选书单</a>
+          <a class="btn btn-primary" href="#/booklist">逛精选书单 →</a>
         </div>
         <div class="hero-stats">
-          <div class="stat"><strong>${BOOKS.length}</strong><span>本书</span></div>
-          <div class="stat"><strong>${totalNotes}</strong><span>条笔记</span></div>
-          <div class="stat"><strong>${CATEGORIES.length}</strong><span>个分类</span></div>
+          <div class="stat"><strong>${listCount}</strong><span>本精选好书</span></div>
+          <div class="stat"><strong>${totalNotes}</strong><span>条读书笔记</span></div>
         </div>
-      </div>
-      <div class="hero-visual">
-        ${featBooks
-          .map(
-            (b) => `
-          <div class="float-book" style="${coverStyle(b)}" onclick="location.hash='#/book/${b.id}'">
-            <span class="fb-emoji">${b.cover.emoji}</span>
-            <span>
-              <span class="fb-title">${esc(b.title)}</span><br/>
-              <span class="fb-author">${esc(b.author)}</span>
-            </span>
-          </div>`
-          )
-          .join("")}
       </div>
     </div>
   </section>
@@ -170,35 +154,22 @@ function viewHome() {
 
   <section class="section wrap" style="padding-top:0">
     <div class="section-head">
-      <span class="eyebrow">Bookshelf</span>
-      <h2>我的书架</h2>
-      <p>每一本都真读过，也真被影响过。</p>
-    </div>
-    <div class="book-grid stagger" id="shelfGrid"></div>
-    <div class="pager-wrap" id="shelfPager"></div>
-  </section>
-
-  <section class="section wrap" style="padding-top:0">
-    <div class="section-head">
       <span class="eyebrow">Curated List</span>
       <h2>精选书单</h2>
-      <p>我亲手挑过、真受益的 ${typeof BOOK_LIST !== "undefined" ? BOOK_LIST.length : 0} 本，按主题分类，每本附一句推荐理由。</p>
+      <p>我亲手挑过、真受益的 ${listCount} 本，按主题分类，每本附一句推荐理由。</p>
     </div>
     <div style="text-align:center;padding:8px 0 4px">
       <a class="btn btn-primary" href="#/booklist">进入精选书单 →</a>
     </div>
   </section>`;
 
-  // 供 initHome 分页使用：书架优先展示有笔记的书
+  // 供 initHome 分页使用
   _homeRecentHtml = recent.map(noteItem);
-  const shelfBooks = [...BOOKS].sort((a, b) => b.notes.length - a.notes.length);
-  _homeBooksHtml = shelfBooks.map(bookCard);
 }
 
-let _homeRecentHtml = [], _homeBooksHtml = [];
+let _homeRecentHtml = [];
 function initHome() {
   mountPaged(document.getElementById("recentList"), document.getElementById("recentPager"), _homeRecentHtml, 8);
-  mountPaged(document.getElementById("shelfGrid"), document.getElementById("shelfPager"), _homeBooksHtml, 24);
 }
 
 function viewBooks() {
@@ -458,22 +429,22 @@ function viewAbout() {
   <section class="section wrap fade-in">
     <div class="about">
       <div class="about-card">
-        <div class="about-avatar">${esc(SITE.author.slice(0, 1))}</div>
+        <div class="about-avatar">📖</div>
         <h1>${esc(SITE.author)}</h1>
-        <div class="role">自媒体创作者 · 读书 / 个人成长 / 认知提升</div>
         <p class="bio">${esc(SITE.bio)}</p>
         <div class="about-quote">「${esc(SITE.motto)}」</div>
 
         <div class="about-stats">
-          <div class="s"><strong>${BOOKS.length}</strong><span>读过的书</span></div>
-          <div class="s"><strong>${allNotes().length}</strong><span>写下的笔记</span></div>
-          <div class="s"><strong>${allTags().length}</strong><span>关注的主题</span></div>
+          <div class="s"><strong>${BOOK_LIST ? BOOK_LIST.length : BOOKS.length}</strong><span>精选好书</span></div>
+          <div class="s"><strong>${allNotes().length}</strong><span>条读书笔记</span></div>
+          <div class="s"><strong>${allTags().length}</strong><span>个关注主题</span></div>
         </div>
 
         <div class="about-contact">
           <h3>找到我</h3>
           <div class="contact-list">
             ${Object.entries(c)
+              .filter(([k, v]) => v && v !== "（暂不公开）")
               .map(([k, v]) => `<div class="ci"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`)
               .join("")}
           </div>
