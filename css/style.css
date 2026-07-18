@@ -319,6 +319,12 @@ a { color: inherit; text-decoration: none; }
 .bl-gzh-btn:hover { filter: brightness(1.05); }
 .bl-gzh-btn:active { transform: translateY(1px); }
 
+/* 热门划线推荐 */
+.bl-hm-list { display: grid; gap: 14px; margin-top: 12px; }
+.bl-hm-item { border-left: 3px solid #f59e0b; padding: 12px 16px; background: linear-gradient(135deg, #fffbeb, #fef3c7); border-radius: 8px; }
+.bl-hm-item .note-body { font-size: 15px; line-height: 1.7; color: #333; }
+.bl-hm-item .note-meta { margin-top: 6px; font-size: 13px; color: #b45309; }
+
 /* ---------- 关于页 ---------- */
 .about { max-width: 720px; margin: 0 auto; }
 .about-card {

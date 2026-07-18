@@ -9,7 +9,7 @@
      #/tag/:name       某标签下的笔记
      #/book/:id        某本书详情（含笔记列表）
      #/note/:id        笔记详情（Markdown 渲染）
-     #/booklist        精选书单（来自飞书书单库）
+     #/booklist        推荐书单（来自飞书书单库）
      #/about           关于
    ============================================================ */
 
@@ -187,11 +187,11 @@ function viewHome() {
   <section class="section wrap" style="padding-top:0">
     <div class="section-head">
       <span class="eyebrow">Curated List</span>
-      <h2>精选书单</h2>
+      <h2>推荐书单</h2>
       <p>我亲手挑过、真受益的 ${typeof BOOK_LIST !== "undefined" ? BOOK_LIST.length : 0} 本，按主题分类，每本附一句推荐理由。</p>
     </div>
     <div style="text-align:center;padding:8px 0 4px">
-      <a class="btn btn-primary" href="#/booklist">进入精选书单 →</a>
+      <a class="btn btn-primary" href="#/booklist">进入推荐书单 →</a>
     </div>
   </section>`;
 
@@ -489,7 +489,7 @@ function viewAbout() {
   </section>`;
 }
 
-/* ---------- 精选书单（来自飞书书单库 window.BOOK_LIST） ---------- */
+/* ---------- 推荐书单（来自飞书书单库 window.BOOK_LIST） ---------- */
 
 /* 飞书书名 → 微信读书笔记 匹配：剥离《》与标点后精确/前缀对齐 */
 function normTitle(s) {
@@ -557,7 +557,7 @@ function viewBookList() {
   <section class="section wrap fade-in">
     <div class="section-head">
       <span class="eyebrow">Book List</span>
-      <h2>精选书单</h2>
+      <h2>推荐书单</h2>
       <p>我亲手挑过、也真受益的书，按主题分类，每本附一句为什么值得读。</p>
     </div>
     <div class="filter-bar" id="blFilter">
@@ -615,9 +615,27 @@ function viewBlBook(i) {
          <h2 style="font-size:22px">微信读书笔记</h2>
        </div>
        ${emptyBlock("这本书在微信读书里还没划线或写想法～")}`;
+
+  // 热门划线补充（来自全站用户热门划线）
+  let hmSection = "";
+  if (typeof HOT_MARKS !== "undefined") {
+    const hm = HOT_MARKS.find(h => h.userTitle === b.title || b.title.includes(h.userTitle) || (h.foundTitle && h.foundTitle === b.title));
+    if (hm && hm.marks && hm.marks.length) {
+      hmSection = `
+      <div class="section-head" style="margin-top:44px;margin-bottom:20px">
+        <h2 style="font-size:22px">🔥 热门划线推荐 · 全站 ${hm.marks.length} 条</h2>
+        <p class="bl-hm-desc" style="color:#888;font-size:13px;margin-top:4px">来自微信读书全站读者的热门划线，按热度排序</p>
+      </div>
+      <div class="bl-hm-list">${hm.marks.map(m => `
+        <article class="note-item bl-hm-item">
+          <div class="note-body">${esc(m.text)}</div>
+          <div class="note-meta"><span>👥 ${m.count} 人划线</span></div>
+        </article>`).join("")}</div>`;
+    }
+  }
   return `
   <section class="section wrap fade-in">
-    <div class="crumb"><a href="#/booklist">精选书单</a><span>›</span>${esc(b.title)}</div>
+    <div class="crumb"><a href="#/booklist">推荐书单</a><span>›</span>${esc(b.title)}</div>
     <div class="bl-detail-hero">
       <h1>${esc(b.title)}</h1>
       <div class="bl-detail-meta">
@@ -633,6 +651,7 @@ function viewBlBook(i) {
     </div>
     ${linkBtn ? `<div class="bl-gzh-wrap">${linkBtn}</div>` : ""}
     ${wrSection}
+    ${hmSection}
   </section>`;
 }
 
