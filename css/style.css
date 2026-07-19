@@ -6,7 +6,7 @@
 
 :root {
   /* 色彩——纯黑白灰，但带一点暖调让眼睛舒服 */
-  --bg:         #fafafa;
+  --bg:         #f2f3f5;
   --card:       #ffffff;
   --ink:        #1d1d1f;
   --ink-2:      #424245;
@@ -48,7 +48,7 @@ a { color: inherit; text-decoration: none; }
 /* ==================== 导航 —— 毛玻璃，干净但有质感 ==================== */
 .site-header {
   position: sticky; top: 0; z-index: 100;
-  background: rgba(250,250,250,.78);
+  background: rgba(242,243,245,.82);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-bottom: .5px solid var(--line);
@@ -145,62 +145,91 @@ a { color: inherit; text-decoration: none; }
 }
 .btn-ghost:hover { background: rgba(0,0,0,.035); border-color: var(--ink-3); }
 
-/* ==================== 精选书单卡片 —— 核心：有呼吸感、有点击欲 ==================== */
-.bl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+/* ==================== 精选书单卡片 —— 参考微信读书：封面+书名横向布局 ==================== */
+.bl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
 .bl-card {
-  background: var(--card);
-  border: .5px solid var(--line);
-  border-radius: var(--radius);
-  padding: 26px;
-  display: flex; flex-direction: column; gap: 9px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.07);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  gap: 18px;
   cursor: pointer;
   transition: all .3s cubic-bezier(.25,.46,.45,.94);
   position: relative;
   overflow: hidden;
+  align-items: flex-start;
 }
-/* 微妙的顶部高光条，增加质感 */
-.bl-card::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.8), transparent);
-  opacity: 0; transition: opacity .3s;
-}
+/* 微信读书式的微妙边框高光——hover时边框变清晰 */
 .bl-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-lg);
-  border-color: transparent;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px -10px rgba(0,0,0,.12);
+  border-color: rgba(0,0,0,.13);
 }
-.bl-card:hover::before { opacity: 1; }
-.bl-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+
+/* ===== 左侧封面区块（视觉锚点）====== */
+.bl-cover {
+  flex-shrink: 0;
+  width: 72px;
+  height: 100px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+.bl-cover-emoji {
+  font-size: 32px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.1));
+}
+
+/* ===== 右侧信息区 ===== */
+.bl-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 2px;
+}
 .bl-title {
-  font-family: var(--font-serif); font-size: 17px; font-weight: 650;
-  line-height: 1.32; letter-spacing: -.2px;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -.15px;
+  color: var(--ink);
+  /* 单行截断，超长书名省略 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: color .2s;
 }
-.bl-card:hover .bl-title { color: var(--ink); }
-.bl-score { color: #c9a227; font-size: 13px; white-space: nowrap; letter-spacing: 1px; flex-shrink: 0; }
-.bl-author { font-size: 13px; color: var(--ink-4); margin-top: 2px; }
-.bl-cats { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+.bl-card:hover .bl-title { color: #000; }
+.bl-author {
+  font-size: 13.5px;
+  color: var(--ink-4);
+  margin-top: 1px;
+}
+/* 底部meta行：分类标签 + 笔记数 */
+.bl-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
 .bl-cat {
-  font-size: 11px; padding: 3px 10px; border-radius: 999px;
-  background: rgba(0,0,0,.035); color: var(--ink-3); font-weight: 500;
-  transition: background .2s;
+  font-size: 11.5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: .3px;
 }
-.bl-card:hover .bl-cat { background: rgba(0,0,0,.06); }
-.bl-recommend {
-  font-size: 14px; color: var(--ink-3); line-height: 1.72; flex: 1;
-  margin-top: 4px;
-  /* 多行截断 */
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+.bl-note-hint, .bl-link-hint {
+  font-size: 11.5px;
+  color: var(--ink-4);
 }
-.bl-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: .5px solid var(--line); }
-.bl-diff { font-size: 12px; color: var(--ink-4); letter-spacing: 2px; }
-.bl-link { font-size: 13px; color: var(--ink-2); font-weight: 500; transition: color .2s; }
-.bl-link:hover { color: var(--ink); }
-.bl-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
-.bl-badge { font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 600; }
-.bl-badge.wr { background: rgba(0,0,0,.04); color: var(--ink-2); }
-.bl-badge.gzh { background: rgba(0,0,0,.04); color: var(--ink-2); }
 
 /* 单本书聚合页 —— 干净，无色块 */
 .bl-detail-hero { padding: 6px 0 2px; }
@@ -519,7 +548,11 @@ a { color: inherit; text-decoration: none; }
   .book-cover { height: 116px; padding: 14px 16px; }
   .book-body { padding: 13px 15px 15px; }
   .cat-card { padding: 18px 16px; border-radius: 14px; }
-  .bl-card { padding: 22px; border-radius: 14px; }
+  .bl-card { padding: 16px; border-radius: 12px; gap: 14px; }
+  .bl-cover { width: 58px; height: 82px; border-radius: 7px; }
+  .bl-cover-emoji { font-size: 26px; }
+  .bl-title { font-size: 15px; }
+  .bl-author { font-size: 13px; }
 
   .note-detail { padding: 0 2px; }
   .note-hero h1 { font-size: 23px; }

@@ -459,30 +459,52 @@ function findWrBook(feishuTitle) {
   return null;
 }
 
+// 每个分类的封面色调（用于卡片左侧封面区块）
+const CAT_COLORS = {
+  "思维认知":    { bg: "#f0edff", accent: "#6366f1" },
+  "决策避坑":    { bg: "#fff8eb", accent: "#f59e0b" },
+  "习惯养成":    { bg: "#ecfdf5", accent: "#10b981" },
+  "能力提升":    { bg: "#eef2ff", accent: "#4f46e5" },
+  "成事方法":    { bg: "#fff1f2", accent: "#e11d48" },
+  "人际关系与沟通": { bg: "#f0fdfa", accent: "#14b8a6" },
+  "人性洞察":    { bg: "#fff7ed", accent: "#ea580c" },
+  "财富认知":    { bg: "#ecfdf5", accent: "#059669" },
+  "经济与商业":   { bg: "#f0f9ff", accent: "#0284c7" },
+  "名人传记":    { bg: "#f8fafc", accent: "#475569" },
+  "心理成长":    { bg: "#fdf2f8", accent: "#db2777" },
+  "哲学思辨":    { bg: "#f5f3ff", accent: "#7c3aed" },
+  "底层规律":    { bg: "#ecfeff", accent: "#06b6d4" },
+  "历史":        { bg: "#fafaf9", accent: "#78716c" },
+  "文学经典":    { bg: "#fdf4ff", accent: "#c026d3" },
+};
+
 function bookListItem(b, i) {
-  const catChips = (b.categories || []).map((c) => `<span class="bl-cat">${esc(c)}</span>`).join("");
-  const diff = "●".repeat(b.difficulty || 0) + "○".repeat(5 - (b.difficulty || 0));
+  const cat = (b.categories || [])[0] || "";
+  const color = CAT_COLORS[cat] || { bg: "#f5f5f5", accent: "#666" };
   const wr = findWrBook(b.title);
   const wrN = wr && wr.notes ? wr.notes.length : 0;
-  const badges = [];
-  if (wrN > 0) badges.push(`<span class="bl-badge wr">📒 热门笔记 ${wrN} 条</span>`);
-  if (b.link) badges.push(`<span class="bl-badge gzh">🔗 有解读</span>`);
-  const linkBtn = b.link
-    ? `<a class="bl-link" href="${esc(b.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">读解读 →</a>`
-    : "";
+  // 封面emoji：根据分类或书名选一个
+  const coverEmojis = {
+    "思维认知": "🧠", "决策避坑": "🎯", "习惯养成": "🔥", "能力提升": "⚡",
+    "成事方法": "🏹", "人际关系与沟通": "💬", "人性洞察": "🔮", "财富认知": "💰",
+    "经济与商业": "📊", "名人传记": "👤", "心理成长": "💚", "哲学思辨": "🌌",
+    "底层规律": "🔬", "历史": "🏛️", "文学经典": "📖",
+  };
+  const emoji = coverEmojis[cat] || "📕";
+
   return `
     <article class="bl-card" onclick="location.hash='#/blbook/${i}'">
-      <div class="bl-head">
-        <h3 class="bl-title">${esc(b.title)}</h3>
-        <span class="bl-score">${stars(b.score || 0)}</span>
+      <div class="bl-cover" style="background:${color.bg}">
+        <span class="bl-cover-emoji">${emoji}</span>
       </div>
-      <div class="bl-author">${esc(b.author || "佚名")}</div>
-      <div class="bl-cats">${catChips}</div>
-      <p class="bl-recommend">${esc(b.recommend || "")}</p>
-      ${badges.length ? `<div class="bl-badges">${badges.join("")}</div>` : ""}
-      <div class="bl-foot">
-        <span class="bl-diff">阅读难度 ${diff}</span>
-        ${linkBtn}
+      <div class="bl-info">
+        <h3 class="bl-title">${esc(b.title)}</h3>
+        <div class="bl-author">${esc(b.author || "佚名")}</div>
+        <div class="bl-meta-row">
+          <span class="bl-cat" style="background:${color.bg};color:${color.accent}">${esc(cat)}</span>
+          ${wrN > 0 ? `<span class="bl-note-hint">📒 ${wrN} 条笔记</span>` : ""}
+          ${b.link ? `<span class="bl-link-hint">🔗 有解读</span>` : ""}
+        </div>
       </div>
     </article>`;
 }
