@@ -800,12 +800,134 @@ function viewBlBook(i) {
       </div>
     </div>
 
+    <div class="bl-actions">
+      <button class="bl-share-btn" onclick="genShareCard(${i})">📤 生成分享卡</button>
+      <span class="bl-actions-tip">保存图片，发朋友圈 / 微信群更吸睛</span>
+    </div>
     ${introBlock}
     ${fwWrap}
     ${linkBtn ? `<div class="bl-gzh-wrap">${linkBtn}</div>` : ""}
     ${wrSection}
     ${hmSection}
   </section>`;
+}
+
+/* ---------- 分享卡生成（canvas 合成，本地资源无跨域） ---------- */
+function genShareCard(i) {
+  const b = (typeof BOOK_LIST !== "undefined" && BOOK_LIST[i]) || null;
+  if (!b) return;
+  const db = (typeof BOOK_DOUBAN !== "undefined" && BOOK_DOUBAN[b.title]) || null;
+  const cw = 750, ch = 1000;
+  const cv = document.createElement("canvas");
+  cv.width = cw; cv.height = ch;
+  const x = cv.getContext("2d");
+  const F = '"PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif';
+
+  // 背景
+  const g = x.createLinearGradient(0, 0, 0, ch);
+  g.addColorStop(0, "#fbfaf8"); g.addColorStop(1, "#f3f0ea");
+  x.fillStyle = g; x.fillRect(0, 0, cw, ch);
+
+  // 顶部品牌
+  x.fillStyle = "#1f1f1f";
+  x.beginPath(); x.arc(54, 64, 22, 0, Math.PI * 2); x.fill();
+  x.fillStyle = "#fff"; x.font = `700 24px ${F}`; x.textBaseline = "middle"; x.textAlign = "center";
+  x.fillText("知", 54, 66);
+  x.textAlign = "left"; x.fillStyle = "#1f1f1f"; x.font = `700 26px ${F}`;
+  x.fillText("认知无穷大", 86, 58);
+  x.fillStyle = "#8a857c"; x.font = `400 14px ${F}`;
+  x.fillText("读书 · 成长 · 认知升级", 86, 80);
+
+  // 圆角矩形助手
+  const rr = (cx, cy, w, h, r) => {
+    x.beginPath();
+    x.moveTo(cx + r, cy);
+    x.arcTo(cx + w, cy, cx + w, cy + h, r);
+    x.arcTo(cx + w, cy + h, cx, cy + h, r);
+    x.arcTo(cx, cy + h, cx, cy, r);
+    x.arcTo(cx, cy, cx + w, cy, r);
+    x.closePath();
+  };
+
+  // 封面（本地，同域）+ 二维码（本地）
+  const coverImg = new Image();
+  coverImg.src = `assets/covers/${i}.jpg`;
+  const qrImg = new Image();
+  qrImg.src = `assets/qr/${i}.png`;
+
+  Promise.all([
+    new Promise((res) => { coverImg.onload = () => res(true); coverImg.onerror = () => res(false); }),
+    new Promise((res) => { qrImg.onload = () => res(true); qrImg.onerror = () => res(false); }),
+  ]).then(([hasCover]) => {
+    // 封面
+    const cw2 = 320, ch2 = cw2 * 1.36;
+    const cx = (cw - cw2) / 2, cy = 120;
+    x.save();
+    x.shadowColor = "rgba(0,0,0,.18)"; x.shadowBlur = 24; x.shadowOffsetY = 12;
+    if (hasCover && coverImg.naturalWidth > 10) {
+      rr(cx, cy, cw2, ch2, 12); x.fillStyle = "#fff"; x.fill();
+      x.shadowColor = "transparent";
+      rr(cx, cy, cw2, ch2, 12); x.clip();
+      const sr = coverImg.naturalWidth / coverImg.naturalHeight;
+      const dr = cw2 / ch2;
+      let sw, sh, sx, sy;
+      if (sr > dr) { sh = coverImg.naturalHeight; sw = sh * dr; sx = (coverImg.naturalWidth - sw) / 2; sy = 0; }
+      else { sw = coverImg.naturalWidth; sh = sw / dr; sx = 0; sy = (coverImg.naturalHeight - sh) / 2; }
+      x.drawImage(coverImg, sx, sy, sw, sh, cx, cy, cw2, ch2);
+    } else {
+      rr(cx, cy, cw2, ch2, 12); x.fillStyle = "#2b2b2b"; x.fill();
+      x.shadowColor = "transparent";
+      const t = (b.title || "").replace(/[《》]/g, "").slice(0, 1);
+      x.fillStyle = "#fff"; x.font = `700 90px ${F}`; x.textAlign = "center"; x.textBaseline = "middle";
+      x.fillText(t, cx + cw2 / 2, cy + ch2 / 2);
+    }
+    x.restore();
+    x.textAlign = "left"; x.textBaseline = "alphabetic";
+
+    // 书名
+    let fs = 32; x.font = `700 ${fs}px ${F}`;
+    let title = b.title || "";
+    while (x.measureText(title).width > cw - 120 && fs > 18) { fs--; x.font = `700 ${fs}px ${F}`; }
+    x.fillStyle = "#1f1f1f"; x.textAlign = "center";
+    x.fillText(title, cw / 2, cy + ch2 + 52);
+
+    // 作者 · 分类
+    const cat = (b.categories || [])[0] || "";
+    const sub = [b.author || "佚名", cat].filter(Boolean).join(" · ");
+    x.fillStyle = "#8a857c"; x.font = `400 17px ${F}`; x.textAlign = "center";
+    x.fillText(sub, cw / 2, cy + ch2 + 84);
+
+    // 豆瓣评分
+    const y = cy + ch2 + 116;
+    if (db && db.rating != null) {
+      x.fillStyle = "#c9a227"; x.font = `700 18px ${F}`; x.textAlign = "center";
+      x.fillText(`豆瓣 ${db.rating.toFixed(1)} · ${db.votes} 人评价`, cw / 2, y);
+    }
+
+    // 分隔线
+    x.strokeStyle = "rgba(0,0,0,.08)"; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(60, 760); x.lineTo(cw - 60, 760); x.stroke();
+
+    // 底部：二维码 + 文案
+    const qy = 800, qs = 150;
+    if (qrImg.naturalWidth > 10) x.drawImage(qrImg, cw - 60 - qs, qy, qs, qs);
+    x.textAlign = "left"; x.fillStyle = "#1f1f1f"; x.font = `700 22px ${F}`;
+    x.fillText("长按识别二维码", 60, qy + 46);
+    x.fillStyle = "#8a857c"; x.font = `400 16px ${F}`;
+    x.fillText("读我的深度解读", 60, qy + 76);
+    x.fillStyle = "#b3ada3"; x.font = `400 13px ${F}`;
+    x.fillText("tsrenzhi.github.io/book-notes", 60, qy + 110);
+
+    // 导出
+    cv.toBlob((blob) => {
+      if (!blob) { alert("生成失败，请重试"); return; }
+      const a = document.createElement("a");
+      a.download = `${(b.title || "分享卡").replace(/[《》]/g, "")}·认知无穷大分享卡.png`;
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }, "image/png");
+  });
 }
 
 /* ---------- 通用块 ---------- */
