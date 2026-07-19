@@ -310,10 +310,14 @@ a { color: inherit; text-decoration: none; }
   font-weight: 600;
   letter-spacing: .3px;
 }
-.bl-note-hint, .bl-link-hint {
+.bl-db-rating {
   font-size: 11.5px;
-  color: var(--ink-4);
+  color: #f59e0b;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
+.bl-db-rating i { font-style: normal; }
 
 /* 单本书聚合页 —— 左封面右信息双栏，右侧直接展示核心问题 */
 .bl-detail-hero {
@@ -442,6 +446,32 @@ a { color: inherit; text-decoration: none; }
 .bl-rec-label { font-size: 11px; font-weight: 700; color: var(--ink-4); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
 .bl-recommend-full { font-size: 16px; color: var(--ink-2); line-height: 1.85; margin: 0; }
 .bl-gzh-wrap { margin-top: 28px; }
+
+/* 多篇解读：iOS 风格列表 */
+.bl-gzh-list { margin-top: 28px; }
+.bl-gzh-head {
+  font-size: 13px; font-weight: 600; color: var(--ink-3);
+  margin-bottom: 10px; letter-spacing: .02em;
+}
+.bl-gzh-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; margin-bottom: 8px;
+  background: #fff; border: 1px solid var(--line);
+  border-radius: var(--radius-sm); text-decoration: none; color: var(--ink);
+  transition: all .2s cubic-bezier(.25,.46,.45,.94);
+}
+.bl-gzh-item:hover {
+  border-color: var(--line-strong);
+  transform: translateX(3px);
+  box-shadow: var(--shadow-sm);
+}
+.bl-gzh-idx {
+  font-size: 12px; color: var(--ink-4);
+  font-variant-numeric: tabular-nums; flex-shrink: 0;
+}
+.bl-gzh-title { flex: 1; font-size: 14.5px; font-weight: 500; line-height: 1.4; }
+.bl-gzh-arrow { color: var(--ink-4); flex-shrink: 0; transition: transform .2s ease; }
+.bl-gzh-item:hover .bl-gzh-arrow { transform: translateX(3px); color: var(--ink-2); }
 
 .bl-gzh-btn {
   display: inline-flex; align-items: center; gap: 6px;

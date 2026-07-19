@@ -492,7 +492,7 @@ function bookListItem(b, i) {
   const cat = (b.categories || [])[0] || "";
   const color = CAT_COLORS[cat] || { bg: "#f5f5f5", accent: "#666" };
   const wr = findWrBook(b.title);
-  const wrN = wr && wr.notes ? wr.notes.length : 0;
+  const db = (typeof BOOK_DOUBAN !== "undefined" && BOOK_DOUBAN[b.title]) || null;
   // 真实封面图（来自微信读书），没有则用分类色块+emoji兜底
   const hasCover = b.cover;
   const coverEmojis = {
@@ -516,8 +516,7 @@ function bookListItem(b, i) {
         <div class="bl-author">${esc(b.author || "佚名")}</div>
         <div class="bl-meta-row">
           <span class="bl-cat" style="background:${color.bg};color:${color.accent}">${esc(cat)}</span>
-          ${wrN > 0 ? `<span class="bl-note-hint">📒 ${wrN} 条笔记</span>` : ""}
-          ${b.link ? `<span class="bl-link-hint">🔗 有解读</span>` : ""}
+          ${db && db.rating != null ? `<span class="bl-db-rating"><i>★</i><strong>${db.rating.toFixed(1)}</strong></span>` : ""}
         </div>
       </div>
       <span class="bl-arrow" aria-hidden="true">→</span>
@@ -714,10 +713,29 @@ function viewBlBook(i) {
   if (!b) return notFound();
   const catName = (b.categories || [])[0] || "全部";
   const catChips = (b.categories || []).map((c) => `<span class="bl-cat">${esc(c)}</span>`).join("");
-  const isGzh = /mp\.weixin\.qq\.com/.test(b.link || "");
-  const linkBtn = b.link
-    ? `<a class="bl-gzh-btn" href="${esc(b.link)}" target="_blank" rel="noopener">${isGzh ? "📱 读我的公众号解读 →" : "📄 读我的飞书笔记 →"}</a>`
-    : "";
+  // 公众号解读：兼容单篇(b.link)与多篇(b.links:[{title,url}])
+  const gzhList = Array.isArray(b.links) && b.links.length
+    ? b.links.map((l) => ({ title: l.title || "", url: l.url || l })).filter((l) => l.url)
+    : (b.link ? [{ title: "", url: b.link }] : []);
+  let linkBtn = "";
+  if (gzhList.length === 1 && !gzhList[0].title) {
+    // 单篇（老格式）：胶囊按钮
+    const u = gzhList[0].url;
+    const g = /mp\.weixin\.qq\.com/.test(u);
+    linkBtn = `<a class="bl-gzh-btn" href="${esc(u)}" target="_blank" rel="noopener">${g ? "📱 读我的公众号解读 →" : "📄 读我的飞书笔记 →"}</a>`;
+  } else if (gzhList.length) {
+    // 多篇：标题 + iOS 风格列表
+    const head = /mp\.weixin\.qq\.com/.test(gzhList[0].url) ? "📱 公众号解读" : "📄 延伸阅读";
+    linkBtn = `<div class="bl-gzh-list">
+      <div class="bl-gzh-head">${head} · ${gzhList.length} 篇</div>
+      ${gzhList.map((l, idx) => `
+        <a class="bl-gzh-item" href="${esc(l.url)}" target="_blank" rel="noopener">
+          <span class="bl-gzh-idx">${String(idx + 1).padStart(2, "0")}</span>
+          <span class="bl-gzh-title">${esc(l.title || "第 " + (idx + 1) + " 篇")}</span>
+          <span class="bl-gzh-arrow" aria-hidden="true">→</span>
+        </a>`).join("")}
+    </div>`;
+  }
   const fw = (typeof BOOK_FRAMEWORKS !== "undefined" && BOOK_FRAMEWORKS[b.title]) || null;
   const db = (typeof BOOK_DOUBAN !== "undefined" && BOOK_DOUBAN[b.title]) || null;
 
@@ -728,7 +746,6 @@ function viewBlBook(i) {
       <span class="bl-douban-stars" style="--p:${(db.rating / 10 * 100).toFixed(0)}%"><i>★★★★★</i></span>
       <strong class="bl-douban-num">${db.rating.toFixed(1)}</strong>
       <span class="bl-douban-votes">(${db.votes}人)</span>
-      <a class="bl-douban-link" href="https://book.douban.com/subject/${db.subjectId}/" target="_blank" rel="noopener">豆瓣 ›</a>
     </div>` : "";
 
   // 副标题：作者 · 出版社 · 年
@@ -747,41 +764,7 @@ function viewBlBook(i) {
        </div>`
     : `<div class="bl-intro-block"><p class="bl-intro-text bl-intro-empty">（暂无简介）</p></div>`;
 
-  // 热门笔记（来自微信读书）
-  const wr = findWrBook(b.title);
-  const wrNotes = wr && wr.notes ? sortNotesForDisplay(wr.notes) : [];
-  const wrSection = wrNotes.length
-    ? `<div class="fw-block">
-         <div class="fw-head"><span class="fw-kicker">笔记</span><h2>热门笔记 · ${wrNotes.length} 条</h2></div>
-         <div class="note-list">${wrNotes.map((n) => noteItem({ ...n, book: wr })).join("")}</div>
-       </div>`
-    : "";
-
-  // 热门划线（来自全站用户热门划线）
-  let hmSection = "";
-  if (typeof HOT_MARKS !== "undefined") {
-    const hm = HOT_MARKS.find((h) => h.userTitle === b.title || b.title.includes(h.userTitle) || (h.foundTitle && h.foundTitle === b.title));
-    if (hm && hm.marks && hm.marks.length) {
-      hmSection = `
-      <div class="fw-block">
-        <div class="fw-head"><span class="fw-kicker">划线</span><h2>🔥 热门划线 · 全站 ${hm.marks.length} 条</h2></div>
-        <div class="bl-hm-list">${hm.marks.map((m) => `
-          <article class="note-item bl-hm-item">
-            <div class="note-body">${esc(m.text)}</div>
-            <div class="note-meta"><span>👥 ${m.count} 人划线</span></div>
-          </article>`).join("")}</div>
-      </div>`;
-    }
-  }
-
-  // 阅读框架：默认折叠，按需展开（避免信息过载）
-  const fwWrap = fw
-    ? `<details class="bl-fw"><summary><span class="bl-fw-sum">深度阅读框架（选读）</span><span class="bl-fw-chev">▾</span></summary><div class="bl-fw-body">${renderBookFramework(fw)}</div></details>`
-    : "";
-
-  // 分享链接（微信卡片：每书独立静态页带 OG 封面）
-  const shareUrl = `https://tsrenzhi.github.io/book-notes/b/${i}.html`;
-  const shareBtn = `<button class="bl-share-link-btn" onclick="event.stopPropagation();navigator.clipboard.writeText('${shareUrl}').then(()=>{this.textContent='✅ 已复制链接';setTimeout(()=>{this.textContent='📋 复制分享链接'},2000)})">📋 复制分享链接</button>`;
+  // 阅读框架、热门笔记、热门划线已移除（用户要求精简）
 
   return `
   <section class="section wrap fade-in">
@@ -804,11 +787,7 @@ function viewBlBook(i) {
     </div>
 
     ${introBlock}
-    ${fwWrap}
     ${linkBtn ? `<div class="bl-gzh-wrap">${linkBtn}</div>` : ""}
-    <div class="bl-gzh-wrap">${shareBtn}</div>
-    ${wrSection}
-    ${hmSection}
   </section>`;
 }
 
