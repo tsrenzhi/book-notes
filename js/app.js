@@ -608,15 +608,6 @@ function renderBookFramework(fw, opts) {
   opts = opts || {};
   let html = "";
 
-  // 一句话定位（钩子）—— 若已在 hero 右侧展示则跳过
-  if (fw.positioning && !opts.skipPositioning) {
-    html += `
-    <div class="fw-block fw-positioning">
-      <div class="fw-pos-mark">"</div>
-      <p>${esc(fw.positioning)}</p>
-    </div>`;
-  }
-
   // 这本书是什么（元信息）
   if (fw.about) {
     const a = fw.about;
@@ -652,21 +643,12 @@ function renderBookFramework(fw, opts) {
     </div>`;
   }
 
-  // 全书要回答的核心问题
-  if (fw.coreQuestion) {
-    html += `
-    <div class="fw-block">
-      <div class="fw-head"><span class="fw-kicker">03</span><h2>全书要回答的核心问题</h2></div>
-      <div class="fw-question">${esc(fw.coreQuestion)}</div>
-    </div>`;
-  }
-
-  // 核心逻辑：全书怎么展开
+  // 核心框架：全书怎么展开（对齐用户七段结构之「四、核心框架」）
   if (fw.logic) {
     const lg = fw.logic;
     html += `
     <div class="fw-block">
-      <div class="fw-head"><span class="fw-kicker">04</span><h2>核心逻辑：全书怎么展开</h2></div>
+      <div class="fw-head"><span class="fw-kicker">03</span><h2>核心框架：全书怎么展开</h2></div>
       ${lg.intro ? `<p class="fw-intro">${esc(lg.intro)}</p>` : ""}
       <div class="fw-chain">
         ${lg.volumes.map((v) => `
@@ -681,11 +663,11 @@ function renderBookFramework(fw, opts) {
     </div>`;
   }
 
-  // 重点抓取
+  // 核心主张
   if (fw.takeaways && fw.takeaways.length) {
     html += `
     <div class="fw-block">
-      <div class="fw-head"><span class="fw-kicker">05</span><h2>重点抓取：真正「立」住的主张</h2></div>
+      <div class="fw-head"><span class="fw-kicker">04</span><h2>核心主张：真正立住的主张</h2></div>
       <ol class="fw-takeaways">
         ${fw.takeaways.map((t) => `<li>${esc(t)}</li>`).join("")}
       </ol>
@@ -697,7 +679,7 @@ function renderBookFramework(fw, opts) {
     const r = fw.howToRead;
     html += `
     <div class="fw-block">
-      <div class="fw-head"><span class="fw-kicker">06</span><h2>怎么读这本书</h2></div>
+      <div class="fw-head"><span class="fw-kicker">05</span><h2>怎么读这本书</h2></div>
       <div class="fw-read">
         ${r.must ? `<div class="fw-read-col fw-read-must"><div class="fw-read-h">✅ 必读核心</div>${r.must.map((x) => `<div class="fw-read-item">${esc(x)}</div>`).join("")}</div>` : ""}
         ${r.skip ? `<div class="fw-read-col fw-read-skip"><div class="fw-read-h">⏭️ 可略读</div>${r.skip.map((x) => `<div class="fw-read-item">${esc(x)}</div>`).join("")}</div>` : ""}
@@ -719,7 +701,7 @@ function renderBookFramework(fw, opts) {
   if (fw.limits) {
     html += `
     <div class="fw-block fw-soft">
-      <div class="fw-head"><span class="fw-kicker">⚠</span><h2>局限提示</h2></div>
+      <div class="fw-head"><span class="fw-kicker">⚠</span><h2>局限与边界</h2></div>
       <p class="fw-soft-text">${esc(fw.limits)}</p>
     </div>`;
   }
@@ -738,8 +720,8 @@ function viewBlBook(i) {
     : "";
   const fw = (typeof BOOK_FRAMEWORKS !== "undefined" && BOOK_FRAMEWORKS[b.title]) || null;
 
-  /* 右侧核心内容：有框架用定位/核心问题，无框架用推荐语 */
-  const coreText = fw ? (fw.positioning || fw.coreQuestion || "") : (b.recommend || "");
+  /* 右侧核心内容：有框架优先展示「核心问题」，无框架用推荐语 */
+  const coreText = fw ? (fw.coreQuestion || fw.positioning || "") : (b.recommend || "");
 
   // 热门笔记（来自微信读书）
   const wr = findWrBook(b.title);
@@ -768,8 +750,8 @@ function viewBlBook(i) {
     }
   }
 
-  /* 框架HTML：传入标记，positioning 已在 hero 展示过则跳过 */
-  const frameworkHtml = fw ? renderBookFramework(fw, { skipPositioning: !!fw.positioning }) : "";
+  /* 框架HTML：核心问题已在 hero 右侧展示，框架块不再重复 */
+  const frameworkHtml = fw ? renderBookFramework(fw, {}) : "";
   const fallbackHtml = fw ? "" : `
     <div class="fw-block">
       <div class="fw-head"><span class="fw-kicker">导读</span><h2>为什么推荐这本书</h2></div>
@@ -794,7 +776,7 @@ function viewBlBook(i) {
           <span class="bl-detail-author">${esc(b.author || "佚名")}</span>
           ${catChips}
         </div>
-        ${coreText ? `<div class="bl-detail-core"><p>${esc(coreText)}</p></div>` : ""}
+        ${coreText ? `<div class="bl-detail-core"><span class="bl-detail-core-label">核心问题</span><p>${esc(coreText)}</p></div>` : ""}
       </div>
     </div>
 
