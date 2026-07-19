@@ -588,7 +588,130 @@ function initBookList() {
   });
 }
 
-/* 飞书书单 → 单本书聚合页：推荐语 + 公众号链接 + 微信读书笔记 */
+/* 飞书书单 → 单本书聚合页：阅读框架 + 公众号链接 + 微信读书笔记 */
+function renderBookFramework(fw) {
+  if (!fw) return "";
+  let html = "";
+
+  // 一句话定位（钩子）
+  if (fw.positioning) {
+    html += `
+    <div class="fw-block fw-positioning">
+      <div class="fw-pos-mark">“</div>
+      <p>${esc(fw.positioning)}</p>
+    </div>`;
+  }
+
+  // 这本书是什么
+  if (fw.about) {
+    const a = fw.about;
+    const rows = [];
+    if (a.full) rows.push(["原名", a.full]);
+    if (a.author) rows.push(["作者", a.author]);
+    if (a.published) rows.push(["出版", a.published]);
+    if (a.significance) rows.push(["地位", a.significance]);
+    if (a.size) rows.push(["体量", a.size]);
+    html += `
+    <div class="fw-block">
+      <div class="fw-head"><span class="fw-kicker">01</span><h2>这本书是什么</h2></div>
+      <div class="fw-about-grid">
+        ${rows.map(([k, v]) => `<div class="fw-about-row"><span class="fw-about-k">${esc(k)}</span><span class="fw-about-v">${esc(v)}</span></div>`).join("")}
+      </div>
+    </div>`;
+  }
+
+  // 背景：写作时的世界
+  if (fw.background) {
+    const bg = fw.background;
+    html += `
+    <div class="fw-block">
+      <div class="fw-head"><span class="fw-kicker">02</span><h2>背景：写作时的世界</h2></div>
+      ${bg.intro ? `<p class="fw-intro">${esc(bg.intro)}</p>` : ""}
+      <div class="fw-bg-cards">
+        ${bg.items.map((it) => `
+          <div class="fw-bg-card">
+            <h4>${esc(it.name)}</h4>
+            <ul>${it.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>
+          </div>`).join("")}
+      </div>
+    </div>`;
+  }
+
+  // 全书要回答的核心问题
+  if (fw.coreQuestion) {
+    html += `
+    <div class="fw-block">
+      <div class="fw-head"><span class="fw-kicker">03</span><h2>全书要回答的核心问题</h2></div>
+      <div class="fw-question">${esc(fw.coreQuestion)}</div>
+    </div>`;
+  }
+
+  // 核心逻辑：全书怎么展开
+  if (fw.logic) {
+    const lg = fw.logic;
+    html += `
+    <div class="fw-block">
+      <div class="fw-head"><span class="fw-kicker">04</span><h2>核心逻辑：全书怎么展开</h2></div>
+      ${lg.intro ? `<p class="fw-intro">${esc(lg.intro)}</p>` : ""}
+      <div class="fw-chain">
+        ${lg.volumes.map((v) => `
+          <div class="fw-vol">
+            <div class="fw-vol-no">${esc(v.no)}</div>
+            <div class="fw-vol-body">
+              <h4>${esc(v.title)}</h4>
+              <ul>${v.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>`;
+  }
+
+  // 重点抓取
+  if (fw.takeaways && fw.takeaways.length) {
+    html += `
+    <div class="fw-block">
+      <div class="fw-head"><span class="fw-kicker">05</span><h2>重点抓取：真正「立」住的主张</h2></div>
+      <ol class="fw-takeaways">
+        ${fw.takeaways.map((t) => `<li>${esc(t)}</li>`).join("")}
+      </ol>
+    </div>`;
+  }
+
+  // 怎么读这本书
+  if (fw.howToRead) {
+    const r = fw.howToRead;
+    html += `
+    <div class="fw-block">
+      <div class="fw-head"><span class="fw-kicker">06</span><h2>怎么读这本书</h2></div>
+      <div class="fw-read">
+        ${r.must ? `<div class="fw-read-col fw-read-must"><div class="fw-read-h">✅ 必读核心</div>${r.must.map((x) => `<div class="fw-read-item">${esc(x)}</div>`).join("")}</div>` : ""}
+        ${r.skip ? `<div class="fw-read-col fw-read-skip"><div class="fw-read-h">⏭️ 可略读</div>${r.skip.map((x) => `<div class="fw-read-item">${esc(x)}</div>`).join("")}</div>` : ""}
+        ${r.order ? `<div class="fw-read-col fw-read-order"><div class="fw-read-h">🧭 建议顺序</div><div class="fw-read-item">${esc(r.order)}</div></div>` : ""}
+      </div>
+    </div>`;
+  }
+
+  // 延伸思考
+  if (fw.extended) {
+    html += `
+    <div class="fw-block fw-soft">
+      <div class="fw-head"><span class="fw-kicker">＋</span><h2>延伸思考</h2></div>
+      <p class="fw-soft-text">${esc(fw.extended)}</p>
+    </div>`;
+  }
+
+  // 局限提示
+  if (fw.limits) {
+    html += `
+    <div class="fw-block fw-soft">
+      <div class="fw-head"><span class="fw-kicker">⚠</span><h2>局限提示</h2></div>
+      <p class="fw-soft-text">${esc(fw.limits)}</p>
+    </div>`;
+  }
+
+  return html;
+}
+
 function viewBlBook(i) {
   const b = (typeof BOOK_LIST !== "undefined" && BOOK_LIST[i]) || null;
   if (!b) return notFound();
@@ -598,51 +721,59 @@ function viewBlBook(i) {
   const linkBtn = b.link
     ? `<a class="bl-gzh-btn" href="${esc(b.link)}" target="_blank" rel="noopener">${isGzh ? "📱 读我的公众号解读 →" : "📄 读我的飞书笔记 →"}</a>`
     : "";
+  const fw = (typeof BOOK_FRAMEWORKS !== "undefined" && BOOK_FRAMEWORKS[b.title]) || null;
+
+  // 热门笔记（来自微信读书）
   const wr = findWrBook(b.title);
   const wrNotes = wr && wr.notes ? sortNotesForDisplay(wr.notes) : [];
   const wrSection = wrNotes.length
-    ? `<div class="section-head" style="margin-top:44px;margin-bottom:20px">
-         <h2 style="font-size:22px">热门笔记 · ${wrNotes.length} 条</h2>
-       </div>
-       <div class="note-list">${wrNotes.map((n) => noteItem({ ...n, book: wr })).join("")}</div>`
-    : `<div class="section-head" style="margin-top:44px;margin-bottom:20px">
-         <h2 style="font-size:22px">热门笔记</h2>
-       </div>
-       ${emptyBlock("这本书还没有笔记～")}`;
+    ? `<div class="fw-block">
+         <div class="fw-head"><span class="fw-kicker">笔记</span><h2>热门笔记 · ${wrNotes.length} 条</h2></div>
+         <div class="note-list">${wrNotes.map((n) => noteItem({ ...n, book: wr })).join("")}</div>
+       </div>`
+    : "";
 
-  // 热门划线补充（来自全站用户热门划线）
+  // 热门划线（来自全站用户热门划线）
   let hmSection = "";
   if (typeof HOT_MARKS !== "undefined") {
-    const hm = HOT_MARKS.find(h => h.userTitle === b.title || b.title.includes(h.userTitle) || (h.foundTitle && h.foundTitle === b.title));
+    const hm = HOT_MARKS.find((h) => h.userTitle === b.title || b.title.includes(h.userTitle) || (h.foundTitle && h.foundTitle === b.title));
     if (hm && hm.marks && hm.marks.length) {
       hmSection = `
-      <div class="section-head" style="margin-top:44px;margin-bottom:20px">
-        <h2 style="font-size:22px">🔥 热门划线推荐 · 全站 ${hm.marks.length} 条</h2>
-        <p class="bl-hm-desc" style="color:#888;font-size:13px;margin-top:4px">来自全站读者的热门划线，按热度排序</p>
-      </div>
-      <div class="bl-hm-list">${hm.marks.map(m => `
-        <article class="note-item bl-hm-item">
-          <div class="note-body">${esc(m.text)}</div>
-          <div class="note-meta"><span>👥 ${m.count} 人划线</span></div>
-        </article>`).join("")}</div>`;
+      <div class="fw-block">
+        <div class="fw-head"><span class="fw-kicker">划线</span><h2>🔥 热门划线 · 全站 ${hm.marks.length} 条</h2></div>
+        <div class="bl-hm-list">${hm.marks.map((m) => `
+          <article class="note-item bl-hm-item">
+            <div class="note-body">${esc(m.text)}</div>
+            <div class="note-meta"><span>👥 ${m.count} 人划线</span></div>
+          </article>`).join("")}</div>
+      </div>`;
     }
   }
+
+  const frameworkHtml = fw ? renderBookFramework(fw) : "";
+  const fallbackHtml = fw ? "" : `
+    <div class="fw-block">
+      <div class="fw-head"><span class="fw-kicker">导读</span><h2>为什么推荐这本书</h2></div>
+      <p class="bl-recommend-full">${esc(b.recommend || "（暂无推荐语）")}</p>
+    </div>`;
+
   return `
   <section class="section wrap fade-in">
     <div class="crumb"><a href="#/booklist">精选书单</a><span>›</span>${esc(b.title)}</div>
-    <div class="bl-detail-hero">
-      <h1>${esc(b.title)}</h1>
-      <div class="bl-detail-meta">
-        <span>${esc(b.author || "佚名")}</span>
-        <span class="bl-score">${stars(b.score || 0)}</span>
-        <span>阅读难度 ${diff}</span>
+    <div class="bl-detail-hero ${b.cover ? "has-cover" : ""}">
+      ${b.cover ? `<div class="bl-detail-cover"><img src="${esc(b.cover)}" alt="${esc(b.title)}" loading="lazy"></div>` : ""}
+      <div class="bl-detail-head">
+        <h1>${esc(b.title)}</h1>
+        <div class="bl-detail-meta">
+          <span>${esc(b.author || "佚名")}</span>
+          <span class="bl-score">${stars(b.score || 0)}</span>
+          <span>阅读难度 ${diff}</span>
+        </div>
+        <div class="bl-cats">${catChips}</div>
       </div>
-      <div class="bl-cats">${catChips}</div>
     </div>
-    <div class="bl-rec-block">
-      <div class="bl-rec-label">为什么推荐这本书</div>
-      <p class="bl-recommend-full">${esc(b.recommend || "（暂无推荐语）")}</p>
-    </div>
+    ${frameworkHtml}
+    ${fallbackHtml}
     ${linkBtn ? `<div class="bl-gzh-wrap">${linkBtn}</div>` : ""}
     ${wrSection}
     ${hmSection}
