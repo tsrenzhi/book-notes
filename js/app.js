@@ -312,7 +312,10 @@ function viewBook(id) {
   const cat = getCategory(b.category);
   return `
   <section class="section wrap fade-in">
-    <div class="crumb"><a href="#/booklist">精选书单</a><span>›</span>${esc(b.title)}</div>
+    <div class="detail-bar">
+      <button class="back-btn" onclick="location.hash='#/booklist'"><span class="bk-arrow">←</span>返回书单</button>
+      <div class="crumb"><a href="#/booklist">精选书单</a><span>›</span>${esc(b.title)}</div>
+    </div>
 
     <div class="bl-detail-hero">
       <h1>${esc(b.title)}</h1>
@@ -365,9 +368,12 @@ function viewNote(id) {
   return `
   <section class="section wrap fade-in">
     <article class="note-detail">
-      <div class="crumb">
-        <a href="#/booklist">精选书单</a><span>›</span>
-        <a href="#/book/${b.id}">${esc(b.title)}</a><span>›</span>笔记
+      <div class="detail-bar">
+        <button class="back-btn" onclick="location.hash='#/book/${b.id}'"><span class="bk-arrow">←</span>返回书籍</button>
+        <div class="crumb">
+          <a href="#/booklist">精选书单</a><span>›</span>
+          <a href="#/book/${b.id}">${esc(b.title)}</a><span>›</span>笔记
+        </div>
       </div>
 
       <div class="note-hero">
@@ -511,6 +517,7 @@ function bookListItem(b, i) {
           ${b.link ? `<span class="bl-link-hint">🔗 有解读</span>` : ""}
         </div>
       </div>
+      <span class="bl-arrow" aria-hidden="true">→</span>
     </article>`;
 }
 
@@ -759,7 +766,10 @@ function viewBlBook(i) {
 
   return `
   <section class="section wrap fade-in">
-    <div class="crumb"><a href="#/booklist">精选书单</a><span>›</span>${esc(b.title)}</div>
+    <div class="detail-bar">
+      <button class="back-btn" onclick="location.hash='#/booklist'"><span class="bk-arrow">←</span>返回书单</button>
+      <div class="crumb"><a href="#/booklist">精选书单</a><span>›</span>${esc(b.title)}</div>
+    </div>
     <div class="bl-detail-hero ${b.cover ? "has-cover" : ""}">
       ${b.cover ? `<div class="bl-detail-cover"><img src="${esc(b.cover)}" alt="${esc(b.title)}" loading="lazy"></div>` : ""}
       <div class="bl-detail-head">

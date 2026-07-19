@@ -75,7 +75,7 @@ a { color: inherit; text-decoration: none; }
   padding: 7px 18px; border-radius: 999px; font-size: 14px; font-weight: 500;
   color: var(--ink-3); transition: all .25s cubic-bezier(.25,.46,.45,.94);
 }
-.nav a:hover { color: var(--ink); background: rgba(0,0,0,.045); }
+.nav a:hover { color: var(--ink); background: rgba(0,0,0,.06); }
 .nav a.active { color: var(--ink); background: var(--ink); color: #fff !important; font-weight: 600; }
 
 .nav-toggle { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 8px; }
@@ -95,9 +95,32 @@ a { color: inherit; text-decoration: none; }
 }
 .section-head p { font-size: 17px; color: var(--ink-3); margin-top: 12px; max-width: 520px; line-height: 1.6; margin-left: auto; margin-right: auto; }
 
-.crumb { font-size: 14px; color: var(--ink-4); margin-bottom: 24px; }
+.crumb { font-size: 14px; color: var(--ink-3); margin-bottom: 24px; }
+.crumb a { color: var(--ink-3); }
 .crumb a:hover { color: var(--ink); }
-.crumb span { margin: 0 6px; }
+.crumb span { margin: 0 6px; color: var(--ink-4); }
+
+/* 详情页顶部导航条：返回按钮 + 面包屑 并列 */
+.detail-bar {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 26px; flex-wrap: wrap;
+}
+.back-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 18px 9px 14px; border-radius: 999px;
+  background: var(--card); color: var(--ink); border: .5px solid var(--line-strong);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: all .22s cubic-bezier(.25,.46,.45,.94);
+}
+.back-btn .bk-arrow { font-size: 16px; line-height: 1; transition: transform .22s; }
+.back-btn:hover {
+  background: var(--ink); color: #fff; border-color: var(--ink);
+  box-shadow: var(--shadow-md); transform: translateY(-1px);
+}
+.back-btn:hover .bk-arrow { transform: translateX(-3px); }
+.back-btn:active { transform: translateY(0) scale(.96); }
+.detail-bar .crumb { margin-bottom: 0; }
 
 /* ==================== Hero —— 大字留白，呼吸感 ==================== */
 .hero { padding: 100px 0 64px; text-align: center; }
@@ -160,12 +183,29 @@ a { color: inherit; text-decoration: none; }
   overflow: hidden;
   align-items: flex-start;
 }
-/* 微信读书式的微妙边框高光——hover时边框变清晰 */
-.bl-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px -10px rgba(0,0,0,.12);
-  border-color: rgba(0,0,0,.13);
+/* 微信读书式的微妙边框高光——hover时边框变清晰 + 箭头浮现 */
+.bl-card {
+  will-change: transform;
 }
+.bl-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 48px -14px rgba(0,0,0,.22);
+  border-color: rgba(0,0,0,.18);
+}
+.bl-card:active { transform: translateY(-2px) scale(.992); box-shadow: var(--shadow); }
+
+/* hover 时浮现的「前往」箭头——明确的可点击暗示 */
+.bl-arrow {
+  position: absolute; right: 18px; top: 50%;
+  width: 30px; height: 30px; flex: none; border-radius: 50%;
+  background: var(--ink); color: #fff;
+  display: grid; place-items: center; font-size: 15px; line-height: 1;
+  opacity: 0; pointer-events: none;
+  transform: translateY(-50%) translateX(8px);
+  transition: all .28s cubic-bezier(.25,.46,.45,.94);
+  box-shadow: var(--shadow-sm);
+}
+.bl-card:hover .bl-arrow { opacity: 1; transform: translateY(-50%) translateX(0); }
 
 /* ===== 左侧封面区块（视觉锚点）====== */
 .bl-cover {
@@ -286,7 +326,7 @@ a { color: inherit; text-decoration: none; }
   border-bottom: .5px solid var(--line);
   transition: transform .2s, box-shadow .2s;
 }
-.bl-hm-item:hover { transform: translateX(3px); box-shadow: var(--shadow-xs); }
+.bl-hm-item:hover { transform: translateX(6px); box-shadow: var(--shadow-sm); border-color: rgba(0,0,0,.14); }
 .bl-hm-item .note-body { font-size: 15px; line-height: 1.75; color: var(--ink); }
 .bl-hm-item .note-meta { margin-top: 8px; font-size: 13px; color: var(--ink-4); }
 
@@ -409,8 +449,9 @@ a { color: inherit; text-decoration: none; }
   background: var(--card); color: var(--ink-3); border: .5px solid var(--line-strong);
   transition: all .25s cubic-bezier(.25,.46,.45,.94);
 }
-.chip:hover { background: var(--card); color: var(--ink); border-color: var(--ink-3); box-shadow: var(--shadow-xs); }
-.chip.active { background: var(--ink); color: #fff; border-color: var(--ink); box-shadow: var(--shadow-sm); }
+.chip:hover { background: rgba(0,0,0,.05); color: var(--ink); border-color: var(--ink-2); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.chip:active { transform: translateY(0) scale(.96); }
+.chip.active { background: var(--ink); color: #fff; border-color: var(--ink); box-shadow: var(--shadow-md); }
 
 /* ==================== 笔记列表 —— 轻盈但清晰 ==================== */
 .note-list { display: flex; flex-direction: column; gap: 10px; }
@@ -421,10 +462,11 @@ a { color: inherit; text-decoration: none; }
   display: flex; gap: 16px; align-items: flex-start;
 }
 .note-item:hover {
-  transform: translateX(4px);
-  box-shadow: var(--shadow);
-  border-color: transparent;
+  transform: translateX(6px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(0,0,0,.14);
 }
+.note-item:active { transform: translateX(2px) scale(.995); }
 .note-item .ni-book {
   flex: none; width: 48px; height: 48px; border-radius: 14px;
   display: grid; place-items: center; font-size: 24px; color: #fff;
