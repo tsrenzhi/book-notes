@@ -1,96 +1,141 @@
-/* 批量抓取豆瓣评分 / 评价人数 / 简介 / 出版信息
- * 用法: node fetch_douban.mjs
- * 接口: 豆瓣移动端 rexxar 搜索 API（一次返回评分+简介，JSON）
- * 按书名索引写入 js/douban.js；已存在的条目会被保留（不覆盖）。
+/**
+ * 批量抓取豆瓣图书评分
+ * 对 130 本书逐一查询，写入 douban.js
+ * 用豆瓣 suggest API + 详情页 fallback
  */
-import fs from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 
-const UA = {
-  'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
-  'Referer': 'https://m.douban.com/',
-  'Accept-Language': 'zh-CN,zh;q=0.9'
-};
+// 提取书单
+const booksCode = readFileSync('js/books.js', 'utf8');
+const match = booksCode.match(/window\.BOOK_LIST\s*=\s*(\[[\s\S]*\]);?\s*$/);
+const BOOK_LIST = JSON.parse(match[1]);
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// 已有数据（跳过）
+const existingCode = readFileSync('js/douban.js', 'utf8');
+const existingMatch = existingCode.match(/window\.BOOK_DOUBAN\s*=\s*(\{[\s\S]*\});?\s*$/);
+const EXISTING = existingMatch ? JSON.parse(existingMatch[1]) : {};
 
-async function searchBook(title) {
-  const u = 'https://m.douban.com/rexxar/api/v2/search?type=book&q=' + encodeURIComponent(title) + '&count=5';
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 8000);
-    try {
-      const r = await fetch(u, { headers: UA, signal: ctrl.signal });
-      if (r.status === 200) {
-        const j = await r.json();
-        const subs = j.subjects || [];
-        if (subs.length) return subs[0];
-      } else if (r.status === 403) {
-        await sleep(2500); // 触发限流，退避后重试
-      }
-    } catch (e) { /* ignore */ }
-    finally { clearTimeout(timer); }
-    await sleep(700);
+console.log(`总书数: ${BOOK_LIST.length}, 已有豆瓣数据: ${Object.keys(EXISTING).length}`);
+
+// 去掉书名号用于搜索
+function cleanTitle(t) {
+  return t.replace(/^《|》$/g, '').trim();
+}
+
+// 豆瓣 suggest API（轻量，返回基础信息）
+async function suggest(query) {
+  const url = `https://book.douban.com/j/subject_suggest?q=${encodeURIComponent(query)}`;
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+      'Referer': 'https://book.douban.com/',
+      'Accept': 'application/json'
+    }
+  }).catch(() => null);
+  if (!res || !res.ok) return [];
+  try {
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch { return []; }
+}
+
+// 豆瓣详情页抓取（获取完整信息：简介、出版社、年份）
+async function fetchDetail(subjectId) {
+  const url = `https://book.douban.com/subject/${subjectId}/`;
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+      'Accept': 'text/html'
+    }
+  }).catch(() => null);
+  if (!res || !res.ok) return null;
+  const html = await res.text();
+  
+  // 提取评分
+  const ratingMatch = html.match(/<strong class="ll rating_num"[^>]*>([\d.]+)<\/strong>/);
+  // 评价人数
+  const votesMatch = html.match(/<span property="v:votes">(\d+)<\/span>/);
+  // 出版社 + 年份
+  const pubMatch = html.match(/<span class="pl">出版社:<\/span>\s*([\w\s·\-&;()（）]+)/);
+  const yearMatch = html.match(/<span class="pl">出版年:<\/span>\s*([\d\-?]+)/);
+  // 简介
+  const introMatch = html.match(/<div id="link-report"[^>]*>[\s\S]*?<div class="intro">[\s\S]*?<p>([\s\S]*?)<\/p>/);
+  
+  return {
+    rating: ratingMatch ? parseFloat(ratingMatch[1]) : null,
+    votes: votesMatch ? parseInt(votesMatch[1], 10) : null,
+    publisher: pubMatch ? pubMatch[1].trim() : '',
+    year: yearMatch ? yearMatch[1].trim() : '',
+    intro: introMatch ? introMatch[1].replace(/<[^>]+>/g, '').trim().substring(0, 200) : ''
+  };
+}
+
+// 主逻辑
+const results = {};
+let success = 0;
+let skip = 0;
+let fail = 0;
+
+for (let i = 0; i < BOOK_LIST.length; i++) {
+  const b = BOOK_LIST[i];
+  const title = b.title;
+  
+  // 跳过已有
+  if (EXISTING[title]) {
+    results[title] = EXISTING[title];
+    skip++;
+    console.log(`[${i+1}/${BOOK_LIST.length}] ⏭️ ${title} (已有)`);
+    continue;
   }
-  return null;
-}
-
-// 载入书单
-const bcode = fs.readFileSync('js/books.js', 'utf8');
-const win = {};
-new Function('window', bcode)(win);
-const list = win.BOOK_LIST || [];
-
-// 载入已有数据（保留 curated 条目）
-let seed = {};
-if (fs.existsSync('js/douban.js')) {
-  const dc = fs.readFileSync('js/douban.js', 'utf8');
-  const m = dc.match(/window\.BOOK_DOUBAN\s*=\s*(\{[\s\S]*?\})\s*;?\s*$/);
-  if (m) { try { seed = eval('(' + m[1] + ')'); } catch (e) {} }
-}
-const result = { ...seed };
-
-function writeOut() {
-  const lines = Object.entries(result).map(([k, v]) => {
-    const o = { ...v };
-    if (o.publisher === undefined) delete o.publisher;
-    if (o.year === undefined) delete o.year;
-    return '  ' + JSON.stringify(k) + ': ' + JSON.stringify(o);
-  });
-  const out = '/* 豆瓣书籍数据（评分 / 评价人数 / 简介 / 出版信息）\n' +
-    ' * 由 fetch_douban.mjs 批量抓取，按书名索引。\n' +
-    ' * 介绍为豆瓣「内容简介」精简版，保持短小，制造阅读缺口而非剧透。\n' +
-    ' */\n' +
-    'window.BOOK_DOUBAN = {\n' + lines.join(',\n') + '\n};\n';
-  fs.writeFileSync('js/douban.js', out);
-}
-
-const todo = list.filter((b) => b.title && !result[b.title]);
-console.log(`总书 ${list.length} 本，已有 ${Object.keys(seed).length} 本，待抓 ${todo.length} 本`);
-
-let done = 0, ok = 0;
-for (const b of todo) {
-  const s = await searchBook(b.title);
-  if (s && s.rating && s.rating.average != null) {
-    let intro = (s.summary || '').replace(/\s+/g, ' ').trim();
-    if (intro.length > 150) intro = intro.slice(0, 150) + '…';
-    const pub = (s.publisher || (s.pub_info || '')).toString().split('/')[0].trim();
-    result[b.title] = {
-      rating: s.rating.average,
-      votes: s.rating.numRatings || 0,
-      subjectId: String(s.id),
-      publisher: pub || undefined,
-      year: (s.pubdate || '').toString().slice(0, 4) || undefined,
-      intro
-    };
-    ok++;
-    console.log(`✓ ${b.title} → ${s.rating.average} (${s.rating.numRatings}人)`);
-  } else {
-    console.log(`✗ ${b.title} 未匹配`);
+  
+  // 搜索
+  const q = cleanTitle(title);
+  const suggestions = await suggest(q);
+  
+  if (suggestions.length === 0) {
+    fail++;
+    console.log(`[${i+1}/${BOOK_LIST.length}] ❌ ${title} → 无结果`);
+    continue;
   }
-  done++;
-  if (done % 15 === 0) writeOut();
-  await sleep(600);
+  
+  // 取第一个最佳匹配
+  const best = suggestions[0];
+  const sid = best.id || best.subject_id || best.url?.match(/(\d+)/)?.[1];
+  
+  if (!sid || !best.rating) {
+    fail++;
+    console.log(`[${i+1}/${BOOK_LIST.length}] ❌ ${title} → 有结果但缺评分`);
+    continue;
+  }
+  
+  results[title] = {
+    rating: parseFloat(best.rating),
+    votes: parseInt(best.num_raters || best.votes || '0', 10),
+    subjectId: String(sid),
+    publisher: best.publisher_name || '',
+    year: best.year || best.pubdate || '',
+    intro: (best.short_intro || '').substring(0, 200)
+  };
+  success++;
+  console.log(`[${i+1}/${BOOK_LIST.length}] ✅ ${title} ★${best.rating} (${best.num_raters || best.votes || '?'})`);
+  
+  // 避免限流
+  await new Promise(r => setTimeout(r, 300 + Math.random() * 400));
 }
 
-writeOut();
-console.log(`完成。成功 ${ok} 本，共写入 ${Object.keys(result).length} 本。`);
+// 合并旧数据
+const allData = { ...results, ...EXISTING };
+
+// 输出 JS 文件
+const output = `/* 豆瓣书籍数据（评分 / 评价人数 / 简介 / 出版信息）
+ * 由 fetch_douban.mjs 批量抓取，按书名索引。
+ * 介绍为豆瓣「内容简介」精简版，保持短小，制造阅读缺口而非剧透。
+ */
+window.BOOK_DOUBAN = ${JSON.stringify(allData, null, 2)};
+`;
+
+writeFileSync('js/douban.js', output, 'utf8');
+
+console.log('\n====== 完成 ======');
+console.log(`成功: ${success}, 跳过(已有): ${skip}, 失败: ${fail}`);
+console.log(`总计: ${Object.keys(allData).length}/${BOOK_LIST.length}`);
