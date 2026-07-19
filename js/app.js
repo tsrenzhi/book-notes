@@ -310,11 +310,12 @@ function viewBook(id) {
   if (!b) return notFound();
   _currentBookId = id;
   const cat = getCategory(b.category);
+  const catName = cat ? cat.name : "全部";
   return `
   <section class="section wrap fade-in">
     <div class="detail-bar">
-      <button class="back-btn" onclick="location.hash='#/booklist'"><span class="bk-arrow">←</span>返回书单</button>
-      <div class="crumb"><a href="#/booklist">精选书单</a><span>›</span>${esc(b.title)}</div>
+      <div class="crumb"><a href="#/booklist" onclick="_returnCat='${esc(catName)}'">精选书单</a><span>›</span>${esc(catName)}</div>
+      <button class="back-btn" onclick="location.hash='#/booklist';_returnCat='${esc(catName)}'"><span class="bk-arrow">←</span>返回</button>
     </div>
 
     <div class="bl-detail-hero">
@@ -369,11 +370,11 @@ function viewNote(id) {
   <section class="section wrap fade-in">
     <article class="note-detail">
       <div class="detail-bar">
-        <button class="back-btn" onclick="location.hash='#/book/${b.id}'"><span class="bk-arrow">←</span>返回书籍</button>
         <div class="crumb">
           <a href="#/booklist">精选书单</a><span>›</span>
-          <a href="#/book/${b.id}">${esc(b.title)}</a><span>›</span>笔记
+          <a href="#/book/${b.id}">${esc(b.title)}</a>
         </div>
+        <button class="back-btn" onclick="location.hash='#/book/${b.id}'"><span class="bk-arrow">←</span>返回</button>
       </div>
 
       <div class="note-hero">
@@ -501,7 +502,7 @@ function bookListItem(b, i) {
   const fallbackEmoji = coverEmojis[cat] || "📕";
 
   return `
-    <article class="bl-card" onclick="location.hash='#/blbook/${i}'">
+    <article class="bl-card" onclick="_returnCat='${esc(cat)}';location.hash='#/blbook/${i}'">
       <div class="bl-cover" ${hasCover ? `style="background:none;padding:0;overflow:hidden"` : `style="background:${color.bg}"}`}>
         ${hasCover
           ? `<img class="bl-cover-img" src="${esc(b.cover)}" alt="${esc(b.title)}封面" loading="lazy" onerror="this.parentElement.style.background='${color.bg}';this.remove();this.parentElement.innerHTML='<span class=\\'bl-cover-emoji\\'>${fallbackEmoji}</span>';" />`
@@ -557,7 +558,8 @@ function initBookList() {
   if (!bar || !grid || typeof BOOK_LIST === "undefined") return;
 
   // 用原始索引，避免筛选后 i 错位
-  let currentCat = "all";
+  let currentCat = _returnCat || "all";
+  _returnCat = null; // 用完即清，避免下次误恢复
 
   const render = (cat) => {
     currentCat = cat;
@@ -594,6 +596,9 @@ function initBookList() {
     render(cat);
   });
 }
+
+/* 全局：记录进入详情前的分类状态，用于"返回时恢复分类" */
+let _returnCat = null;
 
 /* 飞书书单 → 单本书聚合页：阅读框架 + 公众号链接 + 微信读书笔记 */
 function renderBookFramework(fw) {
@@ -764,11 +769,14 @@ function viewBlBook(i) {
       <p class="bl-recommend-full">${esc(b.recommend || "（暂无推荐语）")}</p>
     </div>`;
 
+  // 获取分类名用于面包屑和返回
+  const catName = (b.categories || [])[0] || "全部";
+
   return `
   <section class="section wrap fade-in">
     <div class="detail-bar">
-      <button class="back-btn" onclick="location.hash='#/booklist'"><span class="bk-arrow">←</span>返回书单</button>
-      <div class="crumb"><a href="#/booklist">精选书单</a><span>›</span>${esc(b.title)}</div>
+      <div class="crumb"><a href="#/booklist" onclick="_returnCat='${esc(catName)}'">精选书单</a><span>›</span>${esc(catName)}</div>
+      <button class="back-btn" onclick="location.hash='#/booklist';_returnCat='${esc(catName)}'"><span class="bk-arrow">←</span>返回</button>
     </div>
     <div class="bl-detail-hero ${b.cover ? "has-cover" : ""}">
       ${b.cover ? `<div class="bl-detail-cover"><img src="${esc(b.cover)}" alt="${esc(b.title)}" loading="lazy"></div>` : ""}

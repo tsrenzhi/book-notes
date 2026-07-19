@@ -75,7 +75,7 @@ a { color: inherit; text-decoration: none; }
   padding: 7px 18px; border-radius: 999px; font-size: 14px; font-weight: 500;
   color: var(--ink-3); transition: all .25s cubic-bezier(.25,.46,.45,.94);
 }
-.nav a:hover { color: var(--ink); background: rgba(0,0,0,.06); }
+.nav a:hover { color: var(--ink); background: rgba(0,0,0,.055); }
 .nav a.active { color: var(--ink); background: var(--ink); color: #fff !important; font-weight: 600; }
 
 .nav-toggle { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 8px; }
@@ -100,27 +100,46 @@ a { color: inherit; text-decoration: none; }
 .crumb a:hover { color: var(--ink); }
 .crumb span { margin: 0 6px; color: var(--ink-4); }
 
-/* 详情页顶部导航条：返回按钮 + 面包屑 并列 */
+/* 详情页顶部：面包屑左 + 返回按钮右（两端对齐） */
 .detail-bar {
-  display: flex; align-items: center; gap: 14px;
-  margin-bottom: 26px; flex-wrap: wrap;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 28px;
 }
+/* 面包屑 —— 简洁，只显示路径 */
+.detail-bar .crumb {
+  margin-bottom: 0;
+  font-size: 14px;
+}
+.detail-bar .crumb a {
+  color: var(--ink-3);
+  transition: color .2s;
+}
+.detail-bar .crumb a:hover { color: var(--ink); }
+.detail-bar .crumb span {
+  margin: 0 5px;
+  color: var(--ink-4);
+}
+
+/* 返回按钮 —— 右侧独立胶囊，克制的存在感 */
 .back-btn {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 9px 18px 9px 14px; border-radius: 999px;
-  background: var(--card); color: var(--ink); border: .5px solid var(--line-strong);
-  font-size: 14px; font-weight: 600; cursor: pointer;
-  box-shadow: var(--shadow-xs);
-  transition: all .22s cubic-bezier(.25,.46,.45,.94);
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px 8px 12px; border-radius: 999px;
+  background: var(--card); color: var(--ink-2); border: .5px solid var(--line-strong);
+  font-size: 13.5px; font-weight: 500; cursor: pointer;
+  box-shadow:
+    0 .5px 1px rgba(0,0,0,.02),
+    0 3px 10px rgba(0,0,0,.04);
+  transition: all .25s cubic-bezier(.23,1,.32,1);
+  flex-shrink: 0;
 }
-.back-btn .bk-arrow { font-size: 16px; line-height: 1; transition: transform .22s; }
+.back-btn .bk-arrow { font-size: 15px; line-height: 1; transition: transform .2s; }
 .back-btn:hover {
   background: var(--ink); color: #fff; border-color: var(--ink);
-  box-shadow: var(--shadow-md); transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,.12);
+  transform: translateY(-1px);
 }
-.back-btn:hover .bk-arrow { transform: translateX(-3px); }
-.back-btn:active { transform: translateY(0) scale(.96); }
-.detail-bar .crumb { margin-bottom: 0; }
+.back-btn:hover .bk-arrow { transform: translateX(-2px); }
+.back-btn:active { transform: scale(.96); transition: .1s; }
 
 /* ==================== Hero —— 大字留白，呼吸感 ==================== */
 .hero { padding: 100px 0 64px; text-align: center; }
@@ -168,72 +187,85 @@ a { color: inherit; text-decoration: none; }
 }
 .btn-ghost:hover { background: rgba(0,0,0,.035); border-color: var(--ink-3); }
 
-/* ==================== 精选书单卡片 —— 参考微信读书：封面+书名横向布局 ==================== */
-.bl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+/* ==================== 精选书单卡片 —— 豆瓣/Apple 质感：柔和扩散阴影 + 呼吸间距 ==================== */
+.bl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
 .bl-card {
   background: #fff;
-  border: 1px solid rgba(0,0,0,.07);
-  border-radius: 14px;
-  padding: 20px;
+  border: .5px solid rgba(0,0,0,.08);
+  border-radius: 16px;
+  padding: 22px;
   display: flex;
   gap: 18px;
   cursor: pointer;
-  transition: all .3s cubic-bezier(.25,.46,.45,.94);
+  transition: transform .35s cubic-bezier(.23,1,.32,1), box-shadow .35s cubic-bezier(.23,1,.32,1), border-color .25s ease;
   position: relative;
   overflow: hidden;
   align-items: flex-start;
+  /* 默认状态就有轻微浮起感 —— 参考 Apple 产品卡片 */
+  box-shadow:
+    0 .5px 1px rgba(0,0,0,.02),
+    0 4px 12px rgba(0,0,0,.04),
+    0 8px 28px -8px rgba(0,0,0,.06);
 }
-/* 微信读书式的微妙边框高光——hover时边框变清晰 + 箭头浮现 */
-.bl-card {
-  will-change: transform;
-}
+/* hover：温和抬升 + 阴影自然扩散（不是突然变黑） */
 .bl-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 22px 48px -14px rgba(0,0,0,.22);
-  border-color: rgba(0,0,0,.18);
+  transform: translateY(-5px);
+  box-shadow:
+    0 1px 2px rgba(0,0,0,.03),
+    0 8px 24px rgba(0,0,0,.07),
+    0 16px 48px -12px rgba(0,0,0,.10);
+  border-color: rgba(0,0,0,.12);
 }
-.bl-card:active { transform: translateY(-2px) scale(.992); box-shadow: var(--shadow); }
+.bl-card:active { transform: translateY(-2px) scale(.995); transition: .1s; }
 
-/* hover 时浮现的「前往」箭头——明确的可点击暗示 */
+/* hover 时浮现的「前往」箭头——克制的可点击暗示 */
 .bl-arrow {
-  position: absolute; right: 18px; top: 50%;
-  width: 30px; height: 30px; flex: none; border-radius: 50%;
+  position: absolute; right: 16px; top: 50%;
+  width: 28px; height: 28px; flex: none; border-radius: 50%;
   background: var(--ink); color: #fff;
-  display: grid; place-items: center; font-size: 15px; line-height: 1;
+  display: grid; place-items: center; font-size: 14px; line-height: 1;
   opacity: 0; pointer-events: none;
-  transform: translateY(-50%) translateX(8px);
-  transition: all .28s cubic-bezier(.25,.46,.45,.94);
-  box-shadow: var(--shadow-sm);
+  transform: translateY(-50%) translateX(6px);
+  transition: all .35s cubic-bezier(.23,1,.32,1);
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
 }
-.bl-card:hover .bl-arrow { opacity: 1; transform: translateY(-50%) translateX(0); }
+.bl-card:hover .bl-arrow { opacity: .9; transform: translateY(-50%) translateX(0); }
 
-/* ===== 左侧封面区块（视觉锚点）====== */
+/* ===== 左侧封面区块（视觉锚点）—— 书籍封面质感 ===== */
 .bl-cover {
   flex-shrink: 0;
-  width: 72px;
-  height: 100px;
-  border-radius: 9px;
+  width: 76px;
+  height: 104px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  /* 封面自带深度阴影 —— 模拟真实书籍厚度 */
+  box-shadow:
+    0 2px 6px rgba(0,0,0,.08),
+    0 4px 16px rgba(0,0,0,.06),
+    inset 0 0 0 .5px rgba(0,0,0,.04);
 }
 .bl-cover-emoji {
   font-size: 32px;
   line-height: 1;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,.1));
 }
-/* 真实封面图（微信读书）—— 填满容器、圆角、阴影 */
+/* 真实封面图 —— 圆角 + 细腻阴影 */
 .bl-cover-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 9px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.10);
-  transition: transform .3s ease;
+  border-radius: 10px;
+  /* 微妙的内光 + 外影 */
+  box-shadow:
+    inset 0 0 0 .5px rgba(255,255,255,.15),
+    0 2px 8px rgba(0,0,0,.10),
+    0 4px 16px rgba(0,0,0,.05);
+  transition: transform .35s cubic-bezier(.23,1,.32,1);
 }
 .bl-card:hover .bl-cover-img {
-  transform: scale(1.03);
+  transform: scale(1.04);
 }
 
 /* ===== 右侧信息区 ===== */
@@ -286,7 +318,11 @@ a { color: inherit; text-decoration: none; }
 /* 单本书聚合页 —— 干净，无色块 */
 .bl-detail-hero { padding: 6px 0 8px; display: flex; gap: 28px; align-items: flex-start; }
 .bl-detail-hero.has-cover { }
-.bl-detail-cover { flex: 0 0 auto; width: 132px; border-radius: 10px; overflow: hidden; box-shadow: var(--shadow-md); }
+.bl-detail-cover { flex: 0 0 auto; width: 136px; border-radius: 12px; overflow: hidden; box-shadow:
+    0 2px 8px rgba(0,0,0,.08),
+    0 8px 24px rgba(0,0,0,.06),
+    0 16px 40px -10px rgba(0,0,0,.04);
+}
 .bl-detail-cover img { display: block; width: 100%; height: auto; }
 .bl-detail-head { flex: 1; min-width: 0; padding-top: 4px; }
 .bl-detail-hero h1 {
@@ -301,7 +337,9 @@ a { color: inherit; text-decoration: none; }
   border: .5px solid var(--line);
   border-left: 3.5px solid var(--ink);
   border-radius: 0 var(--radius) var(--radius) 0;
-  box-shadow: var(--shadow-xs);
+  box-shadow:
+    0 .5px 1px rgba(0,0,0,.02),
+    0 2px 8px rgba(0,0,0,.03);
 }
 .bl-rec-label { font-size: 11px; font-weight: 700; color: var(--ink-4); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
 .bl-recommend-full { font-size: 16px; color: var(--ink-2); line-height: 1.85; margin: 0; }
@@ -326,7 +364,13 @@ a { color: inherit; text-decoration: none; }
   border-bottom: .5px solid var(--line);
   transition: transform .2s, box-shadow .2s;
 }
-.bl-hm-item:hover { transform: translateX(6px); box-shadow: var(--shadow-sm); border-color: rgba(0,0,0,.14); }
+.bl-hm-item:hover {
+  transform: translateX(5px);
+  box-shadow:
+    0 4px 14px rgba(0,0,0,.05),
+    0 8px 24px -8px rgba(0,0,0,.05);
+  border-color: rgba(0,0,0,.10);
+}
 .bl-hm-item .note-body { font-size: 15px; line-height: 1.75; color: var(--ink); }
 .bl-hm-item .note-meta { margin-top: 8px; font-size: 13px; color: var(--ink-4); }
 
@@ -347,7 +391,10 @@ a { color: inherit; text-decoration: none; }
 /* 一句话定位 */
 .fw-positioning {
   position: relative; background: var(--card); border: .5px solid var(--line);
-  border-radius: var(--radius); padding: 32px 34px 30px 64px; box-shadow: var(--shadow-sm);
+  border-radius: var(--radius); padding: 32px 34px 30px 64px; box-shadow:
+    0 .5px 1px rgba(0,0,0,.02),
+    0 2px 8px rgba(0,0,0,.03),
+    0 4px 20px -6px rgba(0,0,0,.04);
 }
 .fw-pos-mark {
   position: absolute; top: 8px; left: 22px; font-family: Georgia, serif;
@@ -359,6 +406,9 @@ a { color: inherit; text-decoration: none; }
 .fw-about-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 0;
   background: var(--card); border: .5px solid var(--line); border-radius: var(--radius); overflow: hidden;
+  box-shadow:
+    0 .5px 1px rgba(0,0,0,.02),
+    0 2px 8px rgba(0,0,0,.03);
 }
 .fw-about-row {
   display: flex; gap: 14px; padding: 16px 22px; border-bottom: .5px solid var(--line);
@@ -374,7 +424,9 @@ a { color: inherit; text-decoration: none; }
 .fw-bg-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .fw-bg-card {
   background: var(--card); border: .5px solid var(--line); border-radius: var(--radius-sm);
-  padding: 18px 20px; box-shadow: var(--shadow-xs);
+  padding: 18px 20px; box-shadow:
+    0 .5px 1px rgba(0,0,0,.02),
+    0 2px 6px rgba(0,0,0,.03);
 }
 .fw-bg-card h4 { font-size: 15px; font-weight: 700; margin: 0 0 10px; color: var(--ink); }
 .fw-bg-card ul { margin: 0; padding-left: 18px; }
@@ -385,6 +437,9 @@ a { color: inherit; text-decoration: none; }
   background: linear-gradient(180deg, #fafafa, #f6f6f7);
   border: .5px solid var(--line); border-radius: var(--radius);
   padding: 22px 26px; font-size: 16px; line-height: 1.9; color: var(--ink-2);
+  box-shadow:
+    0 .5px 1px rgba(0,0,0,.02),
+    0 2px 8px rgba(0,0,0,.03);
 }
 
 /* 核心逻辑：卷链 */
@@ -405,10 +460,15 @@ a { color: inherit; text-decoration: none; }
 }
 .fw-vol-body {
   flex: 1; min-width: 0; background: var(--card); border: .5px solid var(--line);
-  border-radius: var(--radius-sm); padding: 18px 22px; box-shadow: var(--shadow-xs);
-  transition: transform .2s, box-shadow .2s;
+  border-radius: var(--radius-sm); padding: 18px 22px; box-shadow:
+    0 .5px 1px rgba(0,0,0,.02),
+    0 2px 8px rgba(0,0,0,.03);
+  transition: transform .3s cubic-bezier(.23,1,.32,1), box-shadow .3s ease;
 }
-.fw-vol-body:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.fw-vol-body:hover { transform: translateY(-2.5px); box-shadow:
+    0 4px 14px rgba(0,0,0,.06),
+    0 8px 28px -10px rgba(0,0,0,.05);
+}
 .fw-vol-body h4 { font-size: 16px; font-weight: 700; margin: 0 0 10px; color: var(--ink); }
 .fw-vol-body ul { margin: 0; padding-left: 18px; }
 .fw-vol-body li { font-size: 14px; color: var(--ink-3); line-height: 1.7; margin-bottom: 6px; }
@@ -418,7 +478,9 @@ a { color: inherit; text-decoration: none; }
 .fw-takeaways li {
   counter-increment: tk; position: relative; background: var(--card); border: .5px solid var(--line);
   border-radius: var(--radius-sm); padding: 16px 20px 16px 54px; font-size: 15px; line-height: 1.75;
-  color: var(--ink-2); box-shadow: var(--shadow-xs);
+  color: var(--ink-2); box-shadow:
+    0 .5px 1px rgba(0,0,0,.02),
+    0 2px 6px rgba(0,0,0,.03);
 }
 .fw-takeaways li::before {
   content: counter(tk); position: absolute; left: 16px; top: 14px;
@@ -430,7 +492,9 @@ a { color: inherit; text-decoration: none; }
 .fw-read { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 14px; }
 .fw-read-col {
   background: var(--card); border: .5px solid var(--line); border-radius: var(--radius-sm);
-  padding: 18px 20px; box-shadow: var(--shadow-xs);
+  padding: 18px 20px; box-shadow:
+    0 .5px 1px rgba(0,0,0,.02),
+    0 2px 6px rgba(0,0,0,.03);
 }
 .fw-read-h { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--ink); }
 .fw-read-item { font-size: 14px; color: var(--ink-3); line-height: 1.7; margin-bottom: 8px; padding-left: 16px; position: relative; }
@@ -440,7 +504,10 @@ a { color: inherit; text-decoration: none; }
 
 /* 延伸 / 局限 —— 轻量 */
 .fw-soft .fw-soft-text { font-size: 15px; line-height: 1.9; color: var(--ink-3); margin: 0; }
-.fw-soft { background: var(--card); border: .5px solid var(--line); border-radius: var(--radius); padding: 22px 26px; }
+.fw-soft { background: var(--card); border: .5px solid var(--line); border-radius: var(--radius); padding: 22px 26px; box-shadow:
+    0 .5px 1px rgba(0,0,0,.02),
+    0 2px 8px rgba(0,0,0,.03);
+}
 
 /* ==================== 筛选条 ==================== */
 .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; justify-content: center; }
@@ -449,24 +516,29 @@ a { color: inherit; text-decoration: none; }
   background: var(--card); color: var(--ink-3); border: .5px solid var(--line-strong);
   transition: all .25s cubic-bezier(.25,.46,.45,.94);
 }
-.chip:hover { background: rgba(0,0,0,.05); color: var(--ink); border-color: var(--ink-2); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.chip:hover { background: rgba(0,0,0,.045); color: var(--ink); border-color: var(--ink-3); box-shadow: 0 2px 8px rgba(0,0,0,.05); transform: translateY(-1.5px); }
 .chip:active { transform: translateY(0) scale(.96); }
 .chip.active { background: var(--ink); color: #fff; border-color: var(--ink); box-shadow: var(--shadow-md); }
 
 /* ==================== 笔记列表 —— 轻盈但清晰 ==================== */
 .note-list { display: flex; flex-direction: column; gap: 10px; }
 .note-item {
-  background: var(--card); border: .5px solid var(--line); border-radius: var(--radius);
+  background: var(--card); border: .5px solid var(--line); border-radius: 14px;
   padding: 20px 24px; cursor: pointer;
-  transition: all .25s cubic-bezier(.25,.46,.45,.94);
+  transition: transform .3s cubic-bezier(.23,1,.32,1), box-shadow .3s ease, border-color .25s ease;
   display: flex; gap: 16px; align-items: flex-start;
+  box-shadow:
+    0 .5px 1px rgba(0,0,0,.02),
+    0 2px 8px rgba(0,0,0,.03);
 }
 .note-item:hover {
-  transform: translateX(6px);
-  box-shadow: var(--shadow-md);
-  border-color: rgba(0,0,0,.14);
+  transform: translateX(5px);
+  box-shadow:
+    0 4px 14px rgba(0,0,0,.06),
+    0 8px 24px -8px rgba(0,0,0,.06);
+  border-color: rgba(0,0,0,.10);
 }
-.note-item:active { transform: translateX(2px) scale(.995); }
+.note-item:active { transform: translateX(2px) scale(.997); }
 .note-item .ni-book {
   flex: none; width: 48px; height: 48px; border-radius: 14px;
   display: grid; place-items: center; font-size: 24px; color: #fff;
@@ -543,7 +615,10 @@ a { color: inherit; text-decoration: none; }
 .about { max-width: 620px; margin: 0 auto; }
 .about-card {
   background: var(--card); border: .5px solid var(--line); border-radius: var(--radius);
-  padding: 48px 38px; box-shadow: var(--shadow);
+  padding: 48px 38px; box-shadow:
+    0 .5px 1px rgba(0,0,0,.02),
+    0 4px 16px rgba(0,0,0,.04),
+    0 8px 32px -6px rgba(0,0,0,.04);
 }
 .about-avatar {
   width: 72px; height: 72px; border-radius: 20px; display: grid; place-items: center;
@@ -666,7 +741,10 @@ a { color: inherit; text-decoration: none; }
   border-radius: var(--radius);
   padding: 48px 32px; margin: 0 auto;
   max-width: calc(var(--wrap) - 20px);
-  box-shadow: var(--shadow-xs);
+  box-shadow:
+    0 .5px 1px rgba(0,0,0,.02),
+    0 4px 16px rgba(0,0,0,.03),
+    0 8px 28px -6px rgba(0,0,0,.04);
 }
 
 /* ==================== 响应式 ==================== */
@@ -723,8 +801,8 @@ a { color: inherit; text-decoration: none; }
   .book-cover { height: 116px; padding: 14px 16px; }
   .book-body { padding: 13px 15px 15px; }
   .cat-card { padding: 18px 16px; border-radius: 14px; }
-  .bl-card { padding: 16px; border-radius: 12px; gap: 14px; }
-  .bl-cover { width: 58px; height: 82px; border-radius: 7px; }
+  .bl-card { padding: 16px; border-radius: 13px; gap: 14px; }
+  .bl-cover { width: 60px; height: 84px; border-radius: 8px; }
   .bl-cover-emoji { font-size: 26px; }
   .bl-title { font-size: 15px; }
   .bl-author { font-size: 13px; }
@@ -744,7 +822,7 @@ a { color: inherit; text-decoration: none; }
   .footer-motto { font-size: 15px; }
   .bl-detail-hero h1 { font-size: 24px; }
   .bl-detail-hero { flex-direction: column; gap: 18px; }
-  .bl-detail-cover { width: 104px; }
+  .bl-detail-cover { width: 108px; border-radius: 11px; }
   .fw-positioning { padding: 28px 22px 26px 54px; }
   .fw-positioning p { font-size: 16px; }
   .fw-head h2 { font-size: 20px; }
