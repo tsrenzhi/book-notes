@@ -648,7 +648,7 @@ function renderBookFramework(fw, opts) {
     const lg = fw.logic;
     html += `
     <div class="fw-block">
-      <div class="fw-head"><span class="fw-kicker">03</span><h2>核心框架：全书怎么展开</h2></div>
+      <div class="fw-head"><span class="fw-kicker">03</span><h2>核心框架：每卷在解决什么难题</h2></div>
       ${lg.intro ? `<p class="fw-intro">${esc(lg.intro)}</p>` : ""}
       <div class="fw-chain">
         ${lg.volumes.map((v) => `
