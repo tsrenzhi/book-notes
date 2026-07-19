@@ -374,25 +374,27 @@ a { color: inherit; text-decoration: none; }
 /* 分类标签容器（hero 下方） */
 .bl-cats { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 
-/* 豆瓣评分块 —— 更权威的第三方评分 */
-.bl-douban { display: flex; align-items: center; gap: 12px; margin: 6px 0 16px; }
-.bl-douban-num {
-  font-family: var(--font-serif); font-size: 32px; font-weight: 700; line-height: 1;
-  color: #1f1f1f; letter-spacing: -.5px;
+/* 豆瓣评分 —— 一行紧凑元数据，不抢戏 */
+.bl-douban {
+  display: flex; align-items: center; gap: 7px;
+  margin: 4px 0 10px; font-size: 14px; line-height: 1.5;
 }
-.bl-douban-meta { display: flex; flex-direction: column; gap: 3px; }
+.bl-douban-label { color: var(--ink-4); font-size: 13px; }
 .bl-douban-stars {
-  position: relative; display: inline-block; font-size: 15px; letter-spacing: 2px;
-  color: #e2e2e2; line-height: 1;
+  position: relative; display: inline-block; font-size: 14px; letter-spacing: 1.5px;
+  color: #e8e8e8; line-height: 1;
 }
 .bl-douban-stars > i {
   position: absolute; left: 0; top: 0; width: var(--p); overflow: hidden;
   color: #ffac2d; white-space: nowrap; font-style: normal;
 }
-.bl-douban-votes { font-size: 12.5px; color: var(--ink-4); }
+.bl-douban-num {
+  font-weight: 700; color: var(--ink); font-size: 15px; letter-spacing: -.3px;
+}
+.bl-douban-votes { color: var(--ink-4); font-size: 12.5px; }
 .bl-douban-link {
-  margin-left: auto; font-size: 12.5px; color: var(--accent); font-weight: 600;
-  text-decoration: none; white-space: nowrap;
+  font-size: 12px; color: var(--accent); font-weight: 500;
+  text-decoration: none; white-space: nowrap; margin-left: 2px;
 }
 .bl-douban-link:hover { text-decoration: underline; }
 
@@ -440,11 +442,6 @@ a { color: inherit; text-decoration: none; }
 .bl-rec-label { font-size: 11px; font-weight: 700; color: var(--ink-4); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
 .bl-recommend-full { font-size: 16px; color: var(--ink-2); line-height: 1.85; margin: 0; }
 .bl-gzh-wrap { margin-top: 28px; }
-.bl-actions { display: flex; align-items: center; gap: 14px; margin: 18px 0 4px; flex-wrap: wrap; }
-.bl-share-btn { display: inline-flex; align-items: center; gap: 8px; background: #1f1f1f; color: #fff; border: none; border-radius: 11px; padding: 12px 18px; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.16); transition: transform .12s ease, box-shadow .2s ease; }
-.bl-share-btn:hover { box-shadow: 0 8px 22px rgba(0,0,0,.22); }
-.bl-share-btn:active { transform: scale(.97); }
-.bl-actions-tip { font-size: 13px; color: var(--ink-4); }
 
 .bl-gzh-btn {
   display: inline-flex; align-items: center; gap: 6px;
@@ -935,8 +932,8 @@ a { color: inherit; text-decoration: none; }
   .bl-detail-core p { font-size: 14.5px; line-height: 1.85; }
 
   /* 豆瓣评分 + 简介 + 折叠框架：移动端居中/紧凑 */
-  .bl-douban { justify-content: center; margin: 10px 0 14px; }
-  .bl-douban-num { font-size: 28px; }
+  .bl-douban { justify-content: center; margin: 8px 0 12px; gap: 6px; font-size: 13px; }
+  .bl-douban-num { font-size: 14.5px; }
   .bl-cats { justify-content: center; }
   .bl-intro-block { padding: 18px 16px; margin-top: 22px; }
   .bl-intro-text { font-size: 14.5px; line-height: 1.85; }
