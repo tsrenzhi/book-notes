@@ -1,5 +1,5 @@
 /* ============================================================
-   读书笔记博客 · 应用逻辑（hash 路由 SPA）
+   认知无穷大 · 应用逻辑（hash 路由 SPA）
    路由表：
      #/                首页
      #/booklist        精选书单（来自飞书书单库）
@@ -136,9 +136,9 @@ function viewHome() {
     </div>
   </section>
 
-  <section class="section wrap" style="background:rgba(0,0,0,.015);border-radius:var(--radius);padding:48px 28px;margin:0 auto;max-width:calc(var(--wrap) - 20px)">
-    <div class="section-head">
-      <span class="eyebrow">Curated List</span>
+  <section class="home-bl-section">
+    <div class="section-head" style="margin-bottom:36px">
+      <span class="eyebrow">Book List</span>
       <h2>精选书单</h2>
       <p style="margin:10px auto 0">${listCount} 本精选好书，按主题分类，每本附一句推荐理由。</p>
     </div>
@@ -163,7 +163,7 @@ function viewBooks() {
   <section class="section wrap fade-in">
     <div class="section-head">
       <span class="eyebrow">Reading List</span>
-      <h2>读书列表</h2>
+      <h2>精选书单</h2>
       <p>共 ${BOOKS.length} 本书 · ${allNotes().length} 条笔记，点分类筛选。</p>
     </div>
     <div class="filter-bar" id="catFilter">
@@ -311,17 +311,10 @@ function viewBook(id) {
   const cat = getCategory(b.category);
   return `
   <section class="section wrap fade-in">
-    <div class="crumb"><a href="#/books">读书列表</a><span>›</span>${esc(b.title)}</div>
+    <div class="crumb"><a href="#/booklist">精选书单</a><span>›</span>${esc(b.title)}</div>
 
-    <div class="book-cover" style="${coverStyle(b)}; height:auto; border-radius:16px; padding:32px; margin-bottom:32px; box-shadow:var(--shadow-lg);">
-      <span class="bc-emoji" style="font-size:72px">${b.cover.emoji}</span>
-      <span class="bc-meta">
-        <span class="bc-title" style="font-size:30px">${esc(b.title)}</span>
-        ${b.subtitle ? `<span class="bc-author" style="font-size:15px;opacity:.95">${esc(b.subtitle)}</span>` : ""}
-        <span class="bc-author" style="margin-top:6px">${esc(b.author)} · ${cat ? cat.name : ""} · ${b.status}</span>
-        <span class="stars" style="color:#fff;margin-top:10px;display:block">${stars(b.rating)}</span>
-      </span>
-    </div>
+    <div class="bl-detail-hero">
+      <h1>${esc(b.title)}</h1>
 
     <p style="font-size:17px;color:var(--ink-soft);line-height:1.9;max-width:760px">${esc(b.summary)}</p>
     <div class="tag-row">
@@ -372,7 +365,7 @@ function viewNote(id) {
   <section class="section wrap fade-in">
     <article class="note-detail">
       <div class="crumb">
-        <a href="#/books">读书列表</a><span>›</span>
+        <a href="#/booklist">精选书单</a><span>›</span>
         <a href="#/book/${b.id}">${esc(b.title)}</a><span>›</span>笔记
       </div>
 
@@ -627,7 +620,7 @@ function router() {
     html = viewHome();
   } else {
     switch (parts[0]) {
-      case "books":       html = viewBooks(); route = "books"; break;
+      case "books":       location.hash = "#/booklist"; return;
       case "categories":  location.hash = "#/booklist"; return;
       case "category":    location.hash = "#/booklist"; return;
       case "tags":        location.hash = "#/"; return;
@@ -651,7 +644,6 @@ function router() {
 
   // 页面内交互与分页渲染
   if (route === "home") initHome();
-  if (route === "books") { bindBookFilter(); initBooks(); }
   if (route === "category") initCategory();
   if (route === "tag") initTag();
   if (route === "book") initBook();
