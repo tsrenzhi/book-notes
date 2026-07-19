@@ -16,8 +16,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function searchBook(title) {
   const u = 'https://m.douban.com/rexxar/api/v2/search?type=book&q=' + encodeURIComponent(title) + '&count=5';
   for (let attempt = 0; attempt < 3; attempt++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
     try {
-      const r = await fetch(u, { headers: UA });
+      const r = await fetch(u, { headers: UA, signal: ctrl.signal });
       if (r.status === 200) {
         const j = await r.json();
         const subs = j.subjects || [];
@@ -26,6 +28,7 @@ async function searchBook(title) {
         await sleep(2500); // 触发限流，退避后重试
       }
     } catch (e) { /* ignore */ }
+    finally { clearTimeout(timer); }
     await sleep(700);
   }
   return null;

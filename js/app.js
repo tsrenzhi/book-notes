@@ -779,6 +779,10 @@ function viewBlBook(i) {
     ? `<details class="bl-fw"><summary><span class="bl-fw-sum">深度阅读框架（选读）</span><span class="bl-fw-chev">▾</span></summary><div class="bl-fw-body">${renderBookFramework(fw)}</div></details>`
     : "";
 
+  // 分享链接（微信卡片：每书独立静态页带 OG 封面）
+  const shareUrl = `https://tsrenzhi.github.io/book-notes/b/${i}.html`;
+  const shareBtn = `<button class="bl-share-link-btn" onclick="event.stopPropagation();navigator.clipboard.writeText('${shareUrl}').then(()=>{this.textContent='✅ 已复制链接';setTimeout(()=>{this.textContent='📋 复制分享链接'},2000)})">📋 复制分享链接</button>`;
+
   return `
   <section class="section wrap fade-in">
     <div class="detail-bar">
@@ -802,6 +806,7 @@ function viewBlBook(i) {
     ${introBlock}
     ${fwWrap}
     ${linkBtn ? `<div class="bl-gzh-wrap">${linkBtn}</div>` : ""}
+    <div class="bl-gzh-wrap">${shareBtn}</div>
     ${wrSection}
     ${hmSection}
   </section>`;
