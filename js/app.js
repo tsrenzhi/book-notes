@@ -547,19 +547,43 @@ function initBookList() {
   const grid = document.getElementById("blGrid");
   const pager = document.getElementById("blPager");
   if (!bar || !grid || typeof BOOK_LIST === "undefined") return;
+
+  // 用原始索引，避免筛选后 i 错位
+  let currentCat = "all";
+
   const render = (cat) => {
-    const list = cat === "all" ? BOOK_LIST : BOOK_LIST.filter((b) => (b.categories || []).includes(cat));
-    if (!list.length) { grid.innerHTML = emptyBlock("这个分类下还没有书"); if (pager) pager.innerHTML = ""; return; }
-    if (list.length <= 24) { grid.innerHTML = list.map((b, i) => bookListItem(b, i)).join(""); if (pager) pager.innerHTML = ""; return; }
-    mountPaged(grid, pager, list.map((b, i) => bookListItem(b, i)), 24);
+    currentCat = cat;
+    // 更新 active 样式
+    bar.querySelectorAll(".chip").forEach((c) => {
+      c.classList.toggle("active", c.dataset.cat === cat);
+    });
+    // 筛选：保留原始索引
+    const filtered = cat === "all"
+      ? BOOK_LIST.map((b, i) => ({ b, i }))
+      : BOOK_LIST.map((b, i) => ({ b, i })).filter(({ b }) => (b.categories || []).includes(cat));
+
+    if (!filtered.length) {
+      grid.innerHTML = emptyBlock("这个分类下还没有书");
+      if (pager) pager.innerHTML = "";
+      return;
+    }
+    const cards = filtered.map(({ b, i }) => bookListItem(b, i));
+    if (cards.length <= 24) {
+      grid.innerHTML = cards.join("");
+      if (pager) pager.innerHTML = "";
+      return;
+    }
+    mountPaged(grid, pager, cards, 24);
   };
-  render("all");
+
+  render(currentCat);
+
   bar.addEventListener("click", (e) => {
     const chip = e.target.closest(".chip");
     if (!chip) return;
-    bar.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
-    chip.classList.add("active");
-    render(chip.dataset.cat);
+    const cat = chip.dataset.cat;
+    if (cat === currentCat) return; // 重复点击不重复渲染
+    render(cat);
   });
 }
 
