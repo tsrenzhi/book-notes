@@ -417,7 +417,7 @@ function viewAbout() {
   <section class="section wrap fade-in">
     <div class="about">
       <div class="about-card">
-        <div class="about-avatar">📖</div>
+        <img class="about-avatar" src="assets/avatar.jpg" alt="${esc(SITE.author)}" />
         <h1>${esc(SITE.author)}</h1>
         <p class="bio">${esc(SITE.bio)}</p>
         <div class="about-quote">「${esc(SITE.motto)}」</div>
