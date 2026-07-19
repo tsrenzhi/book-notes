@@ -127,29 +127,22 @@ function viewHome() {
   return `
   <section class="hero wrap fade-in">
     <div class="hero-inner">
-      <span class="hero-eyebrow">📖 读书 · 成长 · 认知升级</span>
+      <span class="hero-eyebrow">读书 · 成长 · 认知</span>
       <h1>把读过的书，<br/>沉淀成<span class="hl">自己的认知</span></h1>
       <p class="lead">${esc(SITE.bio)}</p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="#/booklist">逛精选书单 →</a>
       </div>
-      <div class="hero-stats">
-        <div class="stat"><strong>${listCount}</strong><span>本精选好书</span></div>
-        <div class="stat"><strong>${totalNotes}</strong><span>条热门笔记</span></div>
-      </div>
     </div>
   </section>
 
-  <section class="section wrap" style="background:var(--card);border-radius:var(--radius);padding:48px 28px;margin:0 auto;max-width:calc(var(--wrap) - 20px);box-shadow:var(--shadow)">
-    <div class="section-head" style="text-align:center">
+  <section class="section wrap" style="background:rgba(0,0,0,.015);border-radius:var(--radius);padding:48px 28px;margin:0 auto;max-width:calc(var(--wrap) - 20px)">
+    <div class="section-head">
       <span class="eyebrow">Curated List</span>
-      <h2 class="gradient-title">精选书单</h2>
+      <h2>精选书单</h2>
       <p style="margin:10px auto 0">${listCount} 本精选好书，按主题分类，每本附一句推荐理由。</p>
     </div>
     <div class="bl-grid stagger" id="homeBlGrid"></div>
-    <div style="text-align:center;padding-top:24px">
-      <a class="btn btn-primary" href="#/booklist">查看全部 ${listCount} 本书 →</a>
-    </div>
   </section>`;
 
   // 供 initHome 分页使用：首页展示精选书单预览
@@ -514,7 +507,7 @@ function viewBookList() {
   <section class="section wrap fade-in">
     <div class="section-head">
       <span class="eyebrow">Book List</span>
-      <h2 class="gradient-title">精选书单</h2>
+      <h2>精选书单</h2>
       <p>我亲手挑过、也真受益的书，按主题分类，每本附一句为什么值得读。</p>
     </div>
     <div class="filter-bar" id="blFilter">
