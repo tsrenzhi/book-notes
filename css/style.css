@@ -801,75 +801,118 @@ a { color: inherit; text-decoration: none; }
   .nav.open { display: flex; }
   .nav a { padding: 12px 14px; font-size: 15px; }
   .nav-toggle { display: flex; }
-  .section { padding: 52px 0; }
-  .hero { padding: 68px 0 48px; }
-  .hero h1 { font-size: 34px; letter-spacing: -.6px; }
-  .hero .lead { font-size: 16px; }
-  .section-head h2 { font-size: 27px; }
-  .about-card { padding: 32px 24px; }
+  .section { padding: 46px 0; }
+  .hero { padding: 60px 0 42px; }
+  .hero h1 { font-size: 32px; letter-spacing: -.55px; }
+  .hero .lead { font-size: 15.5px; }
+  .section-head h2 { font-size: 25px; }
+  .about-card { padding: 28px 20px; }
   .about-stats { grid-template-columns: 1fr; gap: 8px; }
   .bl-grid { grid-template-columns: 1fr; }
-  .home-bl-section { padding: 36px 20px; }
+  .home-bl-section { padding: 32px 18px; }
   .fw-about-grid { grid-template-columns: 1fr; }
   .fw-about-row { border-right: none; }
   .fw-about-row:nth-last-child(2) { border-bottom: .5px solid var(--line); }
   .fw-bg-cards { grid-template-columns: 1fr; }
   .fw-read { grid-template-columns: 1fr; }
+
+  /* 详情页：平板竖屏过渡 */
+  .bl-detail-hero { gap: 24px; align-items: center; text-align: center; }
+  .bl-detail-cover { width: 130px; border-radius: 8px; }
+  .bl-detail-hero h1 { font-size: 26px; }
+  .bl-detail-sub { justify-content: center; }
+  .detail-bar { padding: 12px 0 16px; }
 }
 
 @media (max-width: 600px) {
-  .book-grid { grid-template-columns: 1fr; gap: 14px; }
-  .cat-grid  { grid-template-columns: 1fr; gap: 12px; }
+  .book-grid { grid-template-columns: 1fr; gap: 12px; }
+  .cat-grid  { grid-template-columns: 1fr; gap: 10px; }
   .about-stats { grid-template-columns: 1fr; }
 
-  .wrap { padding: 0 18px; }
-  .section { padding: 42px 0; }
-  .hero { padding: 54px 0 38px; }
-  .hero h1 { font-size: 29px; letter-spacing: -.4px; }
-  .hero .lead { font-size: 15px; margin-bottom: 26px; }
-  .section-head h2 { font-size: 24px; }
-  .section-head { margin-bottom: 28px; }
+  .wrap { padding: 0 16px; }
+  .section { padding: 36px 0; }
+  .hero { padding: 48px 0 32px; }
+  .hero h1 { font-size: 28px; letter-spacing: -.35px; }
+  .hero .lead { font-size: 14.5px; margin-bottom: 22px; }
+  .section-head h2 { font-size: 22px; }
+  .section-head { margin-bottom: 22px; }
 
   .header-inner { height: 48px; padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
   .brand-text em { display: none; }
   .brand-text strong { font-size: 15px; }
   .nav { top: 48px; padding: 8px 16px; }
-  .nav a { padding: 12px 14px; font-size: 15px; }
+  .nav a { padding: 11px 13px; font-size: 15px; }
 
-  .book-card { border-radius: 14px; }
-  .book-cover { height: 116px; padding: 14px 16px; }
-  .book-body { padding: 13px 15px 15px; }
-  .cat-card { padding: 18px 16px; border-radius: 14px; }
-  .bl-card { padding: 16px; border-radius: 13px; gap: 14px; }
-  .bl-cover { width: 60px; height: 84px; border-radius: 8px; }
-  .bl-cover-emoji { font-size: 26px; }
-  .bl-title { font-size: 15px; }
-  .bl-author { font-size: 13px; }
+  .book-card { border-radius: 13px; }
+  .book-cover { height: 110px; padding: 12px 14px; }
+  .book-body { padding: 12px 14px 14px; }
+  .cat-card { padding: 16px 14px; border-radius: 13px; }
+  /* 书单卡片：紧凑 + 封面圆角收小 */
+  .bl-card { padding: 14px 16px; border-radius: 12px; gap: 13px; }
+  .bl-cover { width: 58px; height: 80px; border-radius: 5px; }
+  .bl-cover-img { border-radius: 5px; }
+  .bl-cover-emoji { font-size: 24px; }
+  .bl-title { font-size: 14.5px; }
+  .bl-author { font-size: 12.5px; }
+
+  /* 详情页面包屑栏 */
+  .detail-bar { padding: 10px 0 14px; gap: 10px; }
+  .detail-bar .crumb { font-size: 13px; }
+  .back-btn { font-size: 13px; padding: 7px 14px; }
+
+  /* 详情页 Hero：封面居中 + 紧凑 */
+  .bl-detail-hero { flex-direction: column; align-items: center; text-align: center; gap: 18px; padding: 6px 0 10px; }
+  .bl-detail-hero h1 { font-size: 23px; letter-spacing: -.3px; margin-bottom: 8px; }
+  .bl-detail-cover { width: 112px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.08), 0 6px 20px rgba(0,0,0,.06); }
+  /* 右侧信息区：居中排列 */
+  .bl-detail-sub { justify-content: center; margin-bottom: 14px; gap: 8px; }
+  .bl-detail-author { font-size: 14px; }
+  /* 核心问题卡片 */
+  .bl-detail-core { padding: 18px 20px; border-radius: 11px; }
+  .bl-detail-core p { font-size: 14.5px; line-height: 1.85; }
+
+  /* 框架块：间距收紧、字号缩小 */
+  .fw-block { margin-top: 28px; }
+  .fw-head { gap: 10px; margin-bottom: 14px; }
+  .fw-head h2 { font-size: 19px; }
+  .fw-kicker { font-size: 11px; padding: 2px 7px; border-radius: 5px; }
+  .fw-intro { font-size: 14px; margin-bottom: 14px; }
+  .fw-about-row { padding: 13px 16px; }
+  .fw-about-k { font-size: 12px; flex-basis: 42px; }
+  .fw-about-v { font-size: 14px; }
+  .fw-bg-card { padding: 14px 16px; border-radius: 9px; }
+  .fw-bg-card h4 { font-size: 14px; margin-bottom: 8px; }
+  .fw-bg-card ul { padding-left: 16px; }
+  .fw-bg-card li { font-size: 13px; line-height: 1.65; margin-bottom: 4px; }
+  .fw-question { padding: 17px 19px; font-size: 14.5px; }
+  .fw-takeaways li { font-size: 14px; line-height: 1.75; padding-left: 4px; }
+  .fw-read-h { font-size: 12.5px; }
+  .fw-read-item { font-size: 13.5px; }
+  .fw-soft-text { font-size: 14px; line-height: 1.8; }
+  /* 卷链 */
+  .fw-vol { gap: 14px; padding-bottom: 20px; }
+  .fw-vol::before { left: 46px; }
+  .fw-vol-no { flex-basis: 40px; height: 40px; font-size: 11px; }
+  .fw-vol-body h4 { font-size: 14.5px; }
+  .fw-vol-body ul { padding-left: 16px; }
+  .fw-vol-body li { font-size: 13px; line-height: 1.7; }
 
   .note-detail { padding: 0 2px; }
-  .note-hero h1 { font-size: 23px; }
-  .md { font-size: 16px; }
+  .note-hero h1 { font-size: 22px; }
+  .md { font-size: 15.5px; }
   .note-nav { flex-direction: column; }
-  .about-card { padding: 26px 18px; border-radius: 14px; }
+  .about-card { padding: 22px 16px; border-radius: 13px; }
 
   .md pre { overflow-x: auto; -webkit-overflow-scrolling: touch; font-size: 13px; }
   .md code, .md a { word-break: break-word; }
 
-  .tag, .chip { padding: 7px 14px; font-size: 14px; }
-  .to-top { right: 14px; bottom: calc(14px + env(safe-area-inset-bottom)); width: 40px; height: 40px; font-size: 16px; }
-  .footer-inner { padding: 0 18px; }
-  .footer-motto { font-size: 15px; }
-  .bl-detail-hero h1 { font-size: 24px; }
-  .bl-detail-hero { flex-direction: column; gap: 20px; }
-  .bl-detail-cover { width: 120px; border-radius: 12px; }
-  .bl-detail-core { padding: 20px 22px; }
-  .bl-detail-core p { font-size: 15.5px; }
-  .fw-positioning { padding: 28px 22px 26px 54px; }
-  .fw-positioning p { font-size: 16px; }
-  .fw-head h2 { font-size: 20px; }
-  .fw-vol { gap: 14px; }
-  .fw-vol::before { left: 52px; }
-  .fw-vol-no { flex-basis: 44px; height: 44px; font-size: 12px; }
+  .tag, .chip { padding: 7px 13px; font-size: 13.5px; }
+  .to-top { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); width: 38px; height: 38px; font-size: 15px; }
+  .footer-inner { padding: 0 16px; }
+  .footer-motto { font-size: 14.5px; }
+  /* 已废弃定位块兼容 */
+  .fw-positioning { padding: 22px 18px 20px 44px; }
+  .fw-positioning p { font-size: 15px; line-height: 1.8; }
 }
 
 @media (max-width: 360px) {
