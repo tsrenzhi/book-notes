@@ -57,6 +57,7 @@ function sortNotesForDisplay(notes) {
  */
 function mountPaged(gridEl, pagerEl, itemsHtml, step) {
   if (!gridEl) return;
+  gridEl.innerHTML = ""; // 清空旧内容，防止分类切换时叠加
   if (!itemsHtml.length) { if (pagerEl) pagerEl.innerHTML = ""; return; }
   let shown = 0;
   const load = () => {
