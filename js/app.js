@@ -483,19 +483,23 @@ function bookListItem(b, i) {
   const color = CAT_COLORS[cat] || { bg: "#f5f5f5", accent: "#666" };
   const wr = findWrBook(b.title);
   const wrN = wr && wr.notes ? wr.notes.length : 0;
-  // 封面emoji：根据分类或书名选一个
+  // 真实封面图（来自微信读书），没有则用分类色块+emoji兜底
+  const hasCover = b.cover;
   const coverEmojis = {
     "思维认知": "🧠", "决策避坑": "🎯", "习惯养成": "🔥", "能力提升": "⚡",
     "成事方法": "🏹", "人际关系与沟通": "💬", "人性洞察": "🔮", "财富认知": "💰",
     "经济与商业": "📊", "名人传记": "👤", "心理成长": "💚", "哲学思辨": "🌌",
     "底层规律": "🔬", "历史": "🏛️", "文学经典": "📖",
   };
-  const emoji = coverEmojis[cat] || "📕";
+  const fallbackEmoji = coverEmojis[cat] || "📕";
 
   return `
     <article class="bl-card" onclick="location.hash='#/blbook/${i}'">
-      <div class="bl-cover" style="background:${color.bg}">
-        <span class="bl-cover-emoji">${emoji}</span>
+      <div class="bl-cover" ${hasCover ? `style="background:none;padding:0;overflow:hidden"` : `style="background:${color.bg}"}`}>
+        ${hasCover
+          ? `<img class="bl-cover-img" src="${esc(b.cover)}" alt="${esc(b.title)}封面" loading="lazy" onerror="this.parentElement.style.background='${color.bg}';this.remove();this.parentElement.innerHTML='<span class=\\'bl-cover-emoji\\'>${fallbackEmoji}</span>';" />`
+          : `<span class="bl-cover-emoji">${fallbackEmoji}</span>`
+        }
       </div>
       <div class="bl-info">
         <h3 class="bl-title">${esc(b.title)}</h3>
