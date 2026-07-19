@@ -314,8 +314,10 @@ function viewBook(id) {
   return `
   <section class="section wrap fade-in">
     <div class="detail-bar">
-      <div class="crumb"><a href="#/booklist" onclick="_returnCat='${esc(catName)}'">精选书单</a><span>›</span>${esc(catName)}</div>
-      <button class="back-btn" onclick="location.hash='#/booklist';_returnCat='${esc(catName)}'"><span class="bk-arrow">←</span>返回</button>
+      <div class="crumb">
+        <a href="#/booklist">精选书单</a><span>›</span><a href="#/booklist" onclick="_returnCat='${esc(catName)}'">${esc(catName)}</a>
+      </div>
+      <button class="back-btn" onclick="if(_returnCat){location.hash='#/booklist'}else{location.hash='#/booklist';_returnCat='${esc(catName)}'}"><span class="bk-arrow">←</span>返回</button>
     </div>
 
     <div class="bl-detail-hero">
@@ -601,34 +603,35 @@ function initBookList() {
 let _returnCat = null;
 
 /* 飞书书单 → 单本书聚合页：阅读框架 + 公众号链接 + 微信读书笔记 */
-function renderBookFramework(fw) {
+function renderBookFramework(fw, opts) {
   if (!fw) return "";
+  opts = opts || {};
   let html = "";
 
-  // 一句话定位（钩子）
-  if (fw.positioning) {
+  // 一句话定位（钩子）—— 若已在 hero 右侧展示则跳过
+  if (fw.positioning && !opts.skipPositioning) {
     html += `
     <div class="fw-block fw-positioning">
-      <div class="fw-pos-mark">“</div>
+      <div class="fw-pos-mark">"</div>
       <p>${esc(fw.positioning)}</p>
     </div>`;
   }
 
-  // 这本书是什么
+  // 这本书是什么（元信息）
   if (fw.about) {
     const a = fw.about;
     const rows = [];
     if (a.full) rows.push(["原名", a.full]);
-    if (a.author) rows.push(["作者", a.author]);
+    // 作者已在 hero 区展示，此处不重复
     if (a.published) rows.push(["出版", a.published]);
     if (a.significance) rows.push(["地位", a.significance]);
     if (a.size) rows.push(["体量", a.size]);
     html += `
     <div class="fw-block">
       <div class="fw-head"><span class="fw-kicker">01</span><h2>这本书是什么</h2></div>
-      <div class="fw-about-grid">
+      ${rows.length ? `<div class="fw-about-grid">
         ${rows.map(([k, v]) => `<div class="fw-about-row"><span class="fw-about-k">${esc(k)}</span><span class="fw-about-v">${esc(v)}</span></div>`).join("")}
-      </div>
+      </div>` : ""}
     </div>`;
   }
 
@@ -727,13 +730,16 @@ function renderBookFramework(fw) {
 function viewBlBook(i) {
   const b = (typeof BOOK_LIST !== "undefined" && BOOK_LIST[i]) || null;
   if (!b) return notFound();
+  const catName = (b.categories || [])[0] || "全部";
   const catChips = (b.categories || []).map((c) => `<span class="bl-cat">${esc(c)}</span>`).join("");
-  const diff = "●".repeat(b.difficulty || 0) + "○".repeat(5 - (b.difficulty || 0));
   const isGzh = /mp\.weixin\.qq\.com/.test(b.link || "");
   const linkBtn = b.link
     ? `<a class="bl-gzh-btn" href="${esc(b.link)}" target="_blank" rel="noopener">${isGzh ? "📱 读我的公众号解读 →" : "📄 读我的飞书笔记 →"}</a>`
     : "";
   const fw = (typeof BOOK_FRAMEWORKS !== "undefined" && BOOK_FRAMEWORKS[b.title]) || null;
+
+  /* 右侧核心内容：有框架用定位/核心问题，无框架用推荐语 */
+  const coreText = fw ? (fw.positioning || fw.coreQuestion || "") : (b.recommend || "");
 
   // 热门笔记（来自微信读书）
   const wr = findWrBook(b.title);
@@ -762,34 +768,36 @@ function viewBlBook(i) {
     }
   }
 
-  const frameworkHtml = fw ? renderBookFramework(fw) : "";
+  /* 框架HTML：传入标记，positioning 已在 hero 展示过则跳过 */
+  const frameworkHtml = fw ? renderBookFramework(fw, { skipPositioning: !!fw.positioning }) : "";
   const fallbackHtml = fw ? "" : `
     <div class="fw-block">
       <div class="fw-head"><span class="fw-kicker">导读</span><h2>为什么推荐这本书</h2></div>
       <p class="bl-recommend-full">${esc(b.recommend || "（暂无推荐语）")}</p>
     </div>`;
 
-  // 获取分类名用于面包屑和返回
-  const catName = (b.categories || [])[0] || "全部";
-
   return `
   <section class="section wrap fade-in">
     <div class="detail-bar">
-      <div class="crumb"><a href="#/booklist" onclick="_returnCat='${esc(catName)}'">精选书单</a><span>›</span>${esc(catName)}</div>
-      <button class="back-btn" onclick="location.hash='#/booklist';_returnCat='${esc(catName)}'"><span class="bk-arrow">←</span>返回</button>
+      <div class="crumb">
+        <a href="#/booklist">精选书单</a><span>›</span><a href="#/booklist" onclick="_returnCat='${esc(catName)}'">${esc(catName)}</a>
+      </div>
+      <button class="back-btn" onclick="if(_returnCat){location.hash='#/booklist'}else{location.hash='#/booklist';_returnCat='${esc(catName)}'}"><span class="bk-arrow">←</span>返回</button>
     </div>
+
+    <!-- Hero：左封面 + 右侧信息（书名/作者/分类/核心问题） -->
     <div class="bl-detail-hero ${b.cover ? "has-cover" : ""}">
       ${b.cover ? `<div class="bl-detail-cover"><img src="${esc(b.cover)}" alt="${esc(b.title)}" loading="lazy"></div>` : ""}
-      <div class="bl-detail-head">
+      <div class="bl-detail-right">
         <h1>${esc(b.title)}</h1>
-        <div class="bl-detail-meta">
-          <span>${esc(b.author || "佚名")}</span>
-          <span class="bl-score">${stars(b.score || 0)}</span>
-          <span>阅读难度 ${diff}</span>
+        <div class="bl-detail-sub">
+          <span class="bl-detail-author">${esc(b.author || "佚名")}</span>
+          ${catChips}
         </div>
-        <div class="bl-cats">${catChips}</div>
+        ${coreText ? `<div class="bl-detail-core"><p>${esc(coreText)}</p></div>` : ""}
       </div>
     </div>
+
     ${frameworkHtml}
     ${fallbackHtml}
     ${linkBtn ? `<div class="bl-gzh-wrap">${linkBtn}</div>` : ""}
