@@ -370,6 +370,63 @@ a { color: inherit; text-decoration: none; }
   font-size: 16.5px; line-height: 1.9; color: var(--ink-2);
   margin: 0; font-weight: 400;
 }
+
+/* 分类标签容器（hero 下方） */
+.bl-cats { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+
+/* 豆瓣评分块 —— 更权威的第三方评分 */
+.bl-douban { display: flex; align-items: center; gap: 12px; margin: 6px 0 16px; }
+.bl-douban-num {
+  font-family: var(--font-serif); font-size: 32px; font-weight: 700; line-height: 1;
+  color: #1f1f1f; letter-spacing: -.5px;
+}
+.bl-douban-meta { display: flex; flex-direction: column; gap: 3px; }
+.bl-douban-stars {
+  position: relative; display: inline-block; font-size: 15px; letter-spacing: 2px;
+  color: #e2e2e2; line-height: 1;
+}
+.bl-douban-stars > i {
+  position: absolute; left: 0; top: 0; width: var(--p); overflow: hidden;
+  color: #ffac2d; white-space: nowrap; font-style: normal;
+}
+.bl-douban-votes { font-size: 12.5px; color: var(--ink-4); }
+.bl-douban-link {
+  margin-left: auto; font-size: 12.5px; color: var(--accent); font-weight: 600;
+  text-decoration: none; white-space: nowrap;
+}
+.bl-douban-link:hover { text-decoration: underline; }
+
+/* 短简介（豆瓣式，克制不剧透） */
+.bl-intro-block {
+  margin-top: 26px; padding: 22px 24px;
+  background: var(--card); border: .5px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 .5px 1px rgba(0,0,0,.02), 0 3px 14px rgba(0,0,0,.03);
+}
+.bl-intro-lead {
+  font-size: 15px; line-height: 1.8; color: var(--ink-2); font-weight: 600;
+  margin: 0 0 12px; padding-left: 12px; border-left: 3px solid var(--ink);
+}
+.bl-intro-text { font-size: 15.5px; line-height: 1.95; color: var(--ink-2); margin: 0; }
+.bl-intro-empty { color: var(--ink-4); }
+
+/* 深度阅读框架 —— 默认折叠，按需展开 */
+.bl-fw {
+  margin-top: 24px; border: .5px solid var(--line); border-radius: var(--radius);
+  background: var(--card); overflow: hidden;
+}
+.bl-fw > summary {
+  list-style: none; cursor: pointer; user-select: none;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; font-size: 15px; font-weight: 600; color: var(--ink);
+}
+.bl-fw > summary::-webkit-details-marker { display: none; }
+.bl-fw-sum { letter-spacing: .3px; }
+.bl-fw-chev { color: var(--ink-4); transition: transform .2s ease; font-size: 13px; }
+.bl-fw[open] .bl-fw-chev { transform: rotate(180deg); }
+.bl-fw-body { padding: 4px 20px 22px; border-top: .5px solid var(--line); }
+.bl-fw-body .fw-block:first-child { margin-top: 22px; }
+.bl-fw-body .fw-block { margin-top: 26px; }
+
 .bl-rec-block {
   margin-top: 28px; padding: 24px 26px;
   background: var(--card);
@@ -870,6 +927,15 @@ a { color: inherit; text-decoration: none; }
   /* 核心问题卡片 */
   .bl-detail-core { padding: 18px 20px; border-radius: 11px; }
   .bl-detail-core p { font-size: 14.5px; line-height: 1.85; }
+
+  /* 豆瓣评分 + 简介 + 折叠框架：移动端居中/紧凑 */
+  .bl-douban { justify-content: center; margin: 10px 0 14px; }
+  .bl-douban-num { font-size: 28px; }
+  .bl-cats { justify-content: center; }
+  .bl-intro-block { padding: 18px 16px; margin-top: 22px; }
+  .bl-intro-text { font-size: 14.5px; line-height: 1.85; }
+  .bl-fw > summary { padding: 14px 16px; }
+  .bl-fw-body { padding: 4px 16px 18px; }
 
   /* 框架块：间距收紧、字号缩小 */
   .fw-block { margin-top: 28px; }

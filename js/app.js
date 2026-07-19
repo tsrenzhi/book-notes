@@ -719,9 +719,34 @@ function viewBlBook(i) {
     ? `<a class="bl-gzh-btn" href="${esc(b.link)}" target="_blank" rel="noopener">${isGzh ? "📱 读我的公众号解读 →" : "📄 读我的飞书笔记 →"}</a>`
     : "";
   const fw = (typeof BOOK_FRAMEWORKS !== "undefined" && BOOK_FRAMEWORKS[b.title]) || null;
+  const db = (typeof BOOK_DOUBAN !== "undefined" && BOOK_DOUBAN[b.title]) || null;
 
-  /* 右侧核心内容：有框架优先展示「核心问题」，无框架用推荐语 */
-  const coreText = fw ? (fw.coreQuestion || fw.positioning || "") : (b.recommend || "");
+  // 豆瓣评分块（更权威）
+  const doubanHtml = db && db.rating != null ? `
+    <div class="bl-douban">
+      <span class="bl-douban-num">${db.rating.toFixed(1)}</span>
+      <div class="bl-douban-meta">
+        <span class="bl-douban-stars" style="--p:${(db.rating / 10 * 100).toFixed(0)}%"><i>★★★★★</i></span>
+        <span class="bl-douban-votes">${db.votes} 人评价</span>
+      </div>
+      <a class="bl-douban-link" href="https://book.douban.com/subject/${db.subjectId}/" target="_blank" rel="noopener">豆瓣 ›</a>
+    </div>` : "";
+
+  // 副标题：作者 · 出版社 · 年
+  const subParts = [esc(b.author || "佚名")];
+  if (db && db.publisher) subParts.push(esc(db.publisher));
+  if (db && db.year) subParts.push(esc(db.year));
+  const subLine = subParts.join(" · ");
+
+  // 简介：豆瓣简介优先，否则推荐语；核心问题作为引导句
+  const introText = (db && db.intro) ? db.intro : (b.recommend || "");
+  const coreQuestion = fw ? fw.coreQuestion : null;
+  const introBlock = (introText || coreQuestion)
+    ? `<div class="bl-intro-block">
+         ${coreQuestion ? `<p class="bl-intro-lead">${esc(coreQuestion)}</p>` : ""}
+         ${introText ? `<p class="bl-intro-text">${esc(introText)}</p>` : ""}
+       </div>`
+    : `<div class="bl-intro-block"><p class="bl-intro-text bl-intro-empty">（暂无简介）</p></div>`;
 
   // 热门笔记（来自微信读书）
   const wr = findWrBook(b.title);
@@ -750,13 +775,10 @@ function viewBlBook(i) {
     }
   }
 
-  /* 框架HTML：核心问题已在 hero 右侧展示，框架块不再重复 */
-  const frameworkHtml = fw ? renderBookFramework(fw, {}) : "";
-  const fallbackHtml = fw ? "" : `
-    <div class="fw-block">
-      <div class="fw-head"><span class="fw-kicker">导读</span><h2>为什么推荐这本书</h2></div>
-      <p class="bl-recommend-full">${esc(b.recommend || "（暂无推荐语）")}</p>
-    </div>`;
+  // 阅读框架：默认折叠，按需展开（避免信息过载）
+  const fwWrap = fw
+    ? `<details class="bl-fw"><summary><span class="bl-fw-sum">深度阅读框架（选读）</span><span class="bl-fw-chev">▾</span></summary><div class="bl-fw-body">${renderBookFramework(fw)}</div></details>`
+    : "";
 
   return `
   <section class="section wrap fade-in">
@@ -767,21 +789,19 @@ function viewBlBook(i) {
       <button class="back-btn" onclick="if(_returnCat){location.hash='#/booklist'}else{location.hash='#/booklist';_returnCat='${esc(catName)}'}"><span class="bk-arrow">←</span>返回</button>
     </div>
 
-    <!-- Hero：左封面 + 右侧信息（书名/作者/分类/核心问题） -->
+    <!-- Hero：左封面 + 右信息（豆瓣式：评分 + 短介绍） -->
     <div class="bl-detail-hero ${b.cover ? "has-cover" : ""}">
       ${b.cover ? `<div class="bl-detail-cover"><img src="${esc(b.cover)}" alt="${esc(b.title)}" loading="lazy"></div>` : ""}
       <div class="bl-detail-right">
         <h1>${esc(b.title)}</h1>
-        <div class="bl-detail-sub">
-          <span class="bl-detail-author">${esc(b.author || "佚名")}</span>
-          ${catChips}
-        </div>
-        ${coreText ? `<div class="bl-detail-core"><span class="bl-detail-core-label">核心问题</span><p>${esc(coreText)}</p></div>` : ""}
+        <div class="bl-detail-sub"><span class="bl-detail-author">${subLine}</span></div>
+        ${doubanHtml}
+        <div class="bl-cats">${catChips}</div>
       </div>
     </div>
 
-    ${frameworkHtml}
-    ${fallbackHtml}
+    ${introBlock}
+    ${fwWrap}
     ${linkBtn ? `<div class="bl-gzh-wrap">${linkBtn}</div>` : ""}
     ${wrSection}
     ${hmSection}
