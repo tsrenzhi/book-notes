@@ -61,7 +61,7 @@ a { color: inherit; text-decoration: none; }
 .brand-mark {
   width: 32px; height: 32px; flex: none;
   border-radius: 8px;
-  object-fit: cover;
+  display: block; object-fit: cover; object-position: top center;
   transition: transform .2s ease;
 }
 .brand:hover .brand-mark { transform: scale(1.05); }
