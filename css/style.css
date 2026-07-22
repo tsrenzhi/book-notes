@@ -61,9 +61,15 @@ a { color: inherit; text-decoration: none; }
 .brand-mark {
   width: 34px; height: 34px; flex: none;
   border-radius: 5px;
-  display: block; object-fit: cover; object-position: center;
+  display: block;
   padding: 0; margin: 0; border: none;
+  overflow: hidden;
   transition: transform .2s ease;
+}
+.brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 .brand:hover .brand-mark { transform: scale(1.05); }
 .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
