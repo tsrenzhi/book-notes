@@ -754,15 +754,36 @@ function viewBlBook(i) {
   if (db && db.year) subParts.push(esc(db.year));
   const subLine = subParts.join(" · ");
 
-  // 简介：豆瓣简介优先，否则推荐语；核心问题作为引导句
-  const introText = (db && db.intro) ? db.intro : (b.recommend || "");
-  const coreQuestion = fw ? fw.coreQuestion : null;
-  const introBlock = (introText || coreQuestion)
-    ? `<div class="bl-intro-block">
-         ${coreQuestion ? `<p class="bl-intro-lead">${esc(coreQuestion)}</p>` : ""}
-         ${introText ? `<p class="bl-intro-text">${esc(introText)}</p>` : ""}
-       </div>`
-    : `<div class="bl-intro-block"><p class="bl-intro-text bl-intro-empty">（暂无简介）</p></div>`;
+  // 速读卡：书籍定位 + 核心观点 + 重点清单（热门划线 top3，带划线人数）
+  const positionText = b.recommend || (db && db.intro ? db.intro.split(/[。！？\n]/)[0] : "");
+  let viewpointText = (db && db.intro) ? db.intro : (fw && fw.coreQuestion ? fw.coreQuestion : (b.recommend || ""));
+  if (viewpointText.length > 120) viewpointText = viewpointText.slice(0, 120) + "…";
+  // 重点清单：热门划线按人数取 top3
+  let scMarks = "";
+  if (typeof HOT_MARKS !== "undefined") {
+    const t = b.title.replace(/[《》\s]/g, "");
+    const hm = HOT_MARKS.find((h) => {
+      const cs = [h.userTitle, h.foundTitle].filter(Boolean).map((s) => s.replace(/[《》\s]/g, ""));
+      return cs.some((c) => c === t || t.includes(c) || c.includes(t));
+    });
+    if (hm && hm.marks && hm.marks.length) {
+      const top = [...hm.marks].sort((x, y) => y.count - x.count).slice(0, 3);
+      scMarks = `
+      <div class="bl-sc-row">
+        <span class="bl-sc-label">重点清单</span>
+        <ul class="bl-sc-marks">
+          ${top.map((m) => `<li class="bl-sc-mark"><span class="bl-sc-count">〔${m.count.toLocaleString()}人〕</span><span class="bl-sc-quote">${esc(m.text)}</span></li>`).join("")}
+        </ul>
+      </div>`;
+    }
+  }
+  const speedCard = `
+  <div class="bl-speedcard">
+    <div class="bl-sc-head"><span class="bl-sc-kicker">⚡</span><h2>速读卡</h2></div>
+    ${positionText ? `<div class="bl-sc-row"><span class="bl-sc-label">书籍定位</span><p class="bl-sc-text">${esc(positionText)}</p></div>` : ""}
+    ${viewpointText ? `<div class="bl-sc-row"><span class="bl-sc-label">核心观点</span><p class="bl-sc-text">${esc(viewpointText)}</p></div>` : ""}
+    ${scMarks}
+  </div>`;
 
   // 阅读框架、热门笔记、热门划线已移除（用户要求精简）
 
@@ -786,7 +807,7 @@ function viewBlBook(i) {
       </div>
     </div>
 
-    ${introBlock}
+    ${speedCard}
     ${linkBtn ? `<div class="bl-gzh-wrap">${linkBtn}</div>` : ""}
   </section>`;
 }

@@ -421,6 +421,31 @@ a { color: inherit; text-decoration: none; }
 .bl-intro-text { font-size: 15.5px; line-height: 1.95; color: var(--ink-2); margin: 0; }
 .bl-intro-empty { color: var(--ink-4); }
 
+/* 速读卡：书籍定位 + 核心观点 + 重点清单 */
+.bl-speedcard {
+  margin-top: 26px; padding: 22px 24px;
+  background: var(--card); border: .5px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 .5px 1px rgba(0,0,0,.02), 0 3px 14px rgba(0,0,0,.03);
+}
+.bl-sc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.bl-sc-kicker { font-size: 17px; line-height: 1; }
+.bl-sc-head h2 { font-size: 17px; font-weight: 700; letter-spacing: -.3px; margin: 0; color: var(--ink); }
+.bl-sc-row { display: flex; gap: 14px; padding: 13px 0; border-top: 1px dashed var(--line); }
+.bl-sc-row:first-of-type { border-top: none; padding-top: 0; }
+.bl-sc-label {
+  flex: none; width: 60px; font-size: 12.5px; font-weight: 700;
+  color: var(--ink-3); padding-top: 2px; letter-spacing: .5px;
+}
+.bl-sc-text { margin: 0; font-size: 15px; line-height: 1.85; color: var(--ink-2); }
+.bl-sc-marks { list-style: none; margin: 0; padding: 0; flex: 1; display: flex; flex-direction: column; gap: 14px; }
+.bl-sc-mark { display: flex; gap: 9px; font-size: 14.5px; line-height: 1.7; align-items: flex-start; }
+.bl-sc-count {
+  flex: none; font-size: 11.5px; font-weight: 700; color: #d9730a; white-space: nowrap;
+  background: #fff3e6; padding: 2px 7px; border-radius: 6px; margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.bl-sc-quote { color: var(--ink-2); }
+
 /* 深度阅读框架 —— 默认折叠，按需展开 */
 .bl-fw {
   margin-top: 24px; border: .5px solid var(--line); border-radius: var(--radius);
