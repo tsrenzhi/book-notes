@@ -758,13 +758,13 @@ function viewBlBook(i) {
   const positionText = b.recommend || (db && db.intro ? db.intro.split(/[。！？\n]/)[0] : "");
   let viewpointText = (db && db.intro) ? db.intro : (fw && fw.coreQuestion ? fw.coreQuestion : (b.recommend || ""));
   if (viewpointText.length > 120) viewpointText = viewpointText.slice(0, 120) + "…";
-  // 重点清单：热门划线按人数取 top3
+  // 重点清单：热门划线按人数取 top3（强归一化匹配书名，避免标点/空格差异漏配）
   let scMarks = "";
   if (typeof HOT_MARKS !== "undefined") {
-    const t = b.title.replace(/[《》\s]/g, "");
+    const t = normTitle(b.title);
     const hm = HOT_MARKS.find((h) => {
-      const cs = [h.userTitle, h.foundTitle].filter(Boolean).map((s) => s.replace(/[《》\s]/g, ""));
-      return cs.some((c) => c === t || t.includes(c) || c.includes(t));
+      const cs = [h.userTitle, h.foundTitle].filter(Boolean).map((s) => normTitle(s));
+      return cs.some((c) => c && c === t);
     });
     if (hm && hm.marks && hm.marks.length) {
       const top = [...hm.marks].sort((x, y) => y.count - x.count).slice(0, 3);
