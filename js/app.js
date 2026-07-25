@@ -606,7 +606,6 @@ function viewBlBook(i) {
   const b = (typeof BOOK_LIST !== "undefined" && BOOK_LIST[i]) || null;
   if (!b) return notFound();
   const catName = (b.categories || [])[0] || "全部";
-  const catChips = (b.categories || []).map((c) => `<span class="bl-cat">${esc(c)}</span>`).join("");
   // 公众号解读：兼容单篇(b.link)与多篇(b.links:[{title,url}])
   const gzhList = Array.isArray(b.links) && b.links.length
     ? b.links.map((l) => ({ title: l.title || "", url: l.url || l })).filter((l) => l.url)
@@ -817,7 +816,6 @@ function viewBlBook(i) {
         <h1>${esc(b.title)}</h1>
         <div class="bl-hero-sub">${subLine}</div>
         ${doubanHtml}
-        <div class="bl-cats">${catChips}</div>
         ${positionText ? `<p class="bl-hero-one-line"><span class="bl-hero-label">一句话</span>${esc(positionText)}</p>` : ""}
       </div>
     </div>
@@ -852,13 +850,13 @@ function viewBlBook(i) {
     <!-- 📱 公众号解读 -->
     ${linkBtn ? `<div class="bl-gzh-wrap">${linkBtn}</div>` : ""}
 
-    <!-- 🕸️ 知识网络关联 -->
+    <!-- 🕸️ 知识图谱关联 -->
     ${bookRelatedThemesHtml(b)}
   </section>`;
 }
 
 /* ============================================================
-   知识网络 / 第二大脑：搜索 · 图谱 · 节点
+   知识图谱 / 第二大脑：搜索 · 图谱 · 节点
    ============================================================ */
 
 /* 书单索引：按书名（强归一化）找 blbook 下标，用于「碎片/节点」跳书 */
@@ -887,7 +885,17 @@ function relatedThemesOfBook(b) {
 /* 书详情页底部：「本书关联主题」+「同主题相关书」 */
 function bookRelatedThemesHtml(b) {
   const nodes = relatedThemesOfBook(b);
-  if (!nodes.length) return "";
+  if (!nodes.length) {
+    // 兜底：没挂上任何节点 → 展示"待挂载"引导卡 + 关键词建议
+    const catName = (b.categories || [])[0] || "";
+    return `<div class="bl-related bl-related-empty">
+      <div class="bl-rel-head"><span class="bl-rel-kicker">🕸️</span><h2>本书关联主题 · 待挂载</h2></div>
+      <p class="bl-rel-sub">这本书还没串到图谱里${catName ? `（分类：${esc(catName)}）` : ""}。我读它的时候，是被哪个问题吸引的？把那个问题挂到图谱上，这本书就有了位置。</p>
+      <div class="bl-related-actions">
+        <a class="btn btn-ghost" href="#/graph">🕸️ 看看现在的知识图谱 →</a>
+      </div>
+    </div>`;
+  }
   const others = [];
   const seen = new Set();
   const selfT = normTitle(b.title);
@@ -918,7 +926,7 @@ function bookRelatedThemesHtml(b) {
     : "";
   return `<div class="bl-related">
     <div class="bl-rel-head"><span class="bl-rel-kicker">🕸️</span><h2>本书关联主题 · 第二大脑</h2></div>
-    <p class="bl-rel-sub">这本书的观点，在知识网络里连着这些主题；点进去看多本书怎么互相印证、甚至打架。</p>
+    <p class="bl-rel-sub">这本书的观点，在知识图谱里连着这些主题；点进去看多本书怎么互相印证、甚至打架。</p>
     <div class="rel-themes">${themeCards}</div>
     ${relatedBooks}
   </div>`;
@@ -1092,15 +1100,15 @@ function viewSearch(q) {
   q = (q || "").trim();
   const hasQ = !!q;
 
-  // 无查询 → 引导去搜索或知识网络
+  // 无查询 → 引导去搜索或知识图谱
   if (!hasQ) {
     return `
     <section class="section wrap fade-in">
       <div class="sr-empty-state">
         <div class="sr-empty-ico">🔍</div>
         <h2>在顶部搜索框输入关键词开始搜索</h2>
-        <p>可以搜书名、作者、观点碎片、知识网络主题</p>
-        <a class="btn btn-ghost" href="#/graph" style="margin-top:16px">🕸️ 或者直接浏览知识网络 →</a>
+        <p>可以搜书名、作者、观点碎片、知识图谱主题</p>
+        <a class="btn btn-ghost" href="#/graph" style="margin-top:16px">🕸️ 或者直接浏览知识图谱 →</a>
       </div>
     </section>`;
   }
@@ -1124,7 +1132,7 @@ function viewSearch(q) {
         <div class="sr-empty-ico">🔍</div>
         <h2>没有找到「${esc(q)}」相关内容</h2>
         <p>试试换个关键词，比如搜「执行力」「习惯」「亲密关系」「稀缺」</p>
-        <a class="btn btn-ghost" href="#/graph" style="margin-top:16px">🕸️ 去知识网络逛逛 →</a>
+        <a class="btn btn-ghost" href="#/graph" style="margin-top:16px">🕸️ 去知识图谱逛逛 →</a>
       </div>
     </section>`;
   }
@@ -1167,7 +1175,7 @@ function viewSearch(q) {
     : "";
 
   const body = `
-    ${nodeHtml ? `<div class="sr-section"><div class="sr-sec-head"><span>🕸️</span> 知识网络主题 · ${scoredNodes.length}</div><div class="sr-nodes">${nodeHtml}</div></div>` : ""}
+    ${nodeHtml ? `<div class="sr-section"><div class="sr-sec-head"><span>🕸️</span> 知识图谱主题 · ${scoredNodes.length}</div><div class="sr-nodes">${nodeHtml}</div></div>` : ""}
     ${bookHtml ? `<div class="sr-section"><div class="sr-sec-head"><span>📚</span> 书籍 · ${scoredBooks.length}</div><div class="sr-books">${bookHtml}</div></div>` : ""}
     ${fragHtml ? `<div class="sr-section"><div class="sr-sec-head"><span>💡</span> 观点碎片 · ${fragRes.length}</div><div class="sr-frags">${fragHtml}</div></div>` : ""}
   `;
@@ -1189,7 +1197,7 @@ function initSearch() {
   }
 }
 
-/* ---------- 知识网络图谱（力导向布局） ---------- */
+/* ---------- 知识图谱（力导向布局） ---------- */
 const NODE_CLUSTER = {
   executive: "#6366f1", procrastination: "#6366f1", perfectionism: "#6366f1", habit: "#6366f1", compounding: "#6366f1",
   "emotional-drain": "#10b981", separation: "#10b981", "people-pleasing": "#10b981", intimacy: "#10b981", nvc: "#10b981",
@@ -1275,12 +1283,12 @@ function viewGraph() {
   <section class="section wrap fade-in">
     <div class="section-head">
       <span class="eyebrow">Knowledge Graph</span>
-      <h2>第二大脑 · 知识网络</h2>
+      <h2>第二大脑 · 知识图谱</h2>
       <p>每个节点是一个问题主题，挂着多本书的视角（含冲突观点）。点节点看全景，点书跳回书页。</p>
     </div>
     <div class="graph-themes" style="margin-bottom:20px">${chips}</div>
     <div class="graph-wrap">
-      <svg class="graph-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="知识网络图谱">
+      <svg class="graph-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="知识图谱图谱">
         <defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="rgba(0,0,0,.3)"/></marker></defs>
         <g class="edges">${edgeSvg}</g>
         <g class="nodes">${nodeSvg}</g>
@@ -1354,7 +1362,7 @@ function viewNode(id) {
   return `
   <section class="section wrap fade-in">
     <div class="detail-bar">
-      <div class="crumb"><a href="#/graph">知识网络</a><span>›</span>${esc(n.title)}</div>
+      <div class="crumb"><a href="#/graph">知识图谱</a><span>›</span>${esc(n.title)}</div>
       <button class="back-btn" onclick="location.hash='#/graph'"><span class="bk-arrow">←</span>返回网络</button>
     </div>
     <div class="node-head">
@@ -1364,7 +1372,7 @@ function viewNode(id) {
     ${edgeHtml ? `<div class="node-edges"><div class="ne-label">关联主题</div><div class="ne-list">${edgeHtml}</div></div>` : ""}
     ${support}${nuance}${conflict}
     ${imaMethodsHtml}
-    <div class="node-foot"><a class="btn btn-ghost" href="#/graph">🕸️ 回到知识网络图谱</a></div>
+    <div class="node-foot"><a class="btn btn-ghost" href="#/graph">🕸️ 回到知识图谱</a></div>
   </section>`;
 }
 
