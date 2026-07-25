@@ -601,113 +601,7 @@ function initBookList() {
 /* 全局：记录进入详情前的分类状态，用于"返回时恢复分类" */
 let _returnCat = null;
 
-/* 飞书书单 → 单本书聚合页：阅读框架 + 公众号链接 + 微信读书笔记 */
-function renderBookFramework(fw, opts) {
-  if (!fw) return "";
-  opts = opts || {};
-  let html = "";
-
-  // 这本书是什么（元信息）
-  if (fw.about) {
-    const a = fw.about;
-    const rows = [];
-    if (a.full) rows.push(["原名", a.full]);
-    // 作者已在 hero 区展示，此处不重复
-    if (a.published) rows.push(["出版", a.published]);
-    if (a.significance) rows.push(["地位", a.significance]);
-    if (a.size) rows.push(["体量", a.size]);
-    html += `
-    <div class="fw-block">
-      <div class="fw-head"><span class="fw-kicker">01</span><h2>这本书是什么</h2></div>
-      ${rows.length ? `<div class="fw-about-grid">
-        ${rows.map(([k, v]) => `<div class="fw-about-row"><span class="fw-about-k">${esc(k)}</span><span class="fw-about-v">${esc(v)}</span></div>`).join("")}
-      </div>` : ""}
-    </div>`;
-  }
-
-  // 背景：写作时的世界
-  if (fw.background) {
-    const bg = fw.background;
-    html += `
-    <div class="fw-block">
-      <div class="fw-head"><span class="fw-kicker">02</span><h2>背景：写作时的世界</h2></div>
-      ${bg.intro ? `<p class="fw-intro">${esc(bg.intro)}</p>` : ""}
-      <div class="fw-bg-cards">
-        ${bg.items.map((it) => `
-          <div class="fw-bg-card">
-            <h4>${esc(it.name)}</h4>
-            <ul>${it.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>
-          </div>`).join("")}
-      </div>
-    </div>`;
-  }
-
-  // 核心框架：全书怎么展开（对齐用户七段结构之「四、核心框架」）
-  if (fw.logic) {
-    const lg = fw.logic;
-    html += `
-    <div class="fw-block">
-      <div class="fw-head"><span class="fw-kicker">03</span><h2>核心框架：每卷在解决什么难题</h2></div>
-      ${lg.intro ? `<p class="fw-intro">${esc(lg.intro)}</p>` : ""}
-      <div class="fw-chain">
-        ${lg.volumes.map((v) => `
-          <div class="fw-vol">
-            <div class="fw-vol-no">${esc(v.no)}</div>
-            <div class="fw-vol-body">
-              <h4>${esc(v.title)}</h4>
-              <ul>${v.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>
-            </div>
-          </div>`).join("")}
-      </div>
-    </div>`;
-  }
-
-  // 核心主张
-  if (fw.takeaways && fw.takeaways.length) {
-    html += `
-    <div class="fw-block">
-      <div class="fw-head"><span class="fw-kicker">04</span><h2>核心主张：真正立住的主张</h2></div>
-      <ol class="fw-takeaways">
-        ${fw.takeaways.map((t) => `<li>${esc(t)}</li>`).join("")}
-      </ol>
-    </div>`;
-  }
-
-  // 怎么读这本书
-  if (fw.howToRead) {
-    const r = fw.howToRead;
-    html += `
-    <div class="fw-block">
-      <div class="fw-head"><span class="fw-kicker">05</span><h2>怎么读这本书</h2></div>
-      <div class="fw-read">
-        ${r.must ? `<div class="fw-read-col fw-read-must"><div class="fw-read-h">✅ 必读核心</div>${r.must.map((x) => `<div class="fw-read-item">${esc(x)}</div>`).join("")}</div>` : ""}
-        ${r.skip ? `<div class="fw-read-col fw-read-skip"><div class="fw-read-h">⏭️ 可略读</div>${r.skip.map((x) => `<div class="fw-read-item">${esc(x)}</div>`).join("")}</div>` : ""}
-        ${r.order ? `<div class="fw-read-col fw-read-order"><div class="fw-read-h">🧭 建议顺序</div><div class="fw-read-item">${esc(r.order)}</div></div>` : ""}
-      </div>
-    </div>`;
-  }
-
-  // 延伸思考
-  if (fw.extended) {
-    html += `
-    <div class="fw-block fw-soft">
-      <div class="fw-head"><span class="fw-kicker">＋</span><h2>延伸思考</h2></div>
-      <p class="fw-soft-text">${esc(fw.extended)}</p>
-    </div>`;
-  }
-
-  // 局限提示
-  if (fw.limits) {
-    html += `
-    <div class="fw-block fw-soft">
-      <div class="fw-head"><span class="fw-kicker">⚠</span><h2>局限与边界</h2></div>
-      <p class="fw-soft-text">${esc(fw.limits)}</p>
-    </div>`;
-  }
-
-  return html;
-}
-
+/* 飞书书单 → 单本书聚合页：交互式学习体验（卡片式 / 问题驱动 / 层层展开） */
 function viewBlBook(i) {
   const b = (typeof BOOK_LIST !== "undefined" && BOOK_LIST[i]) || null;
   if (!b) return notFound();
@@ -719,12 +613,10 @@ function viewBlBook(i) {
     : (b.link ? [{ title: "", url: b.link }] : []);
   let linkBtn = "";
   if (gzhList.length === 1 && !gzhList[0].title) {
-    // 单篇（老格式）：胶囊按钮
     const u = gzhList[0].url;
     const g = /mp\.weixin\.qq\.com/.test(u);
     linkBtn = `<a class="bl-gzh-btn" href="${esc(u)}" target="_blank" rel="noopener">${g ? "📱 读我的公众号解读 →" : "📄 读我的飞书笔记 →"}</a>`;
   } else if (gzhList.length) {
-    // 多篇：标题 + iOS 风格列表
     const head = /mp\.weixin\.qq\.com/.test(gzhList[0].url) ? "📱 公众号解读" : "📄 延伸阅读";
     linkBtn = `<div class="bl-gzh-list">
       <div class="bl-gzh-head">${head} · ${gzhList.length} 篇</div>
@@ -739,7 +631,7 @@ function viewBlBook(i) {
   const fw = (typeof BOOK_FRAMEWORKS !== "undefined" && BOOK_FRAMEWORKS[b.title]) || null;
   const db = (typeof BOOK_DOUBAN !== "undefined" && BOOK_DOUBAN[b.title]) || null;
 
-  // 豆瓣评分（一行紧凑，不抢戏）
+  // 豆瓣评分（一行紧凑）
   const doubanHtml = db && db.rating != null ? `
     <div class="bl-douban">
       <span class="bl-douban-label">豆瓣</span>
@@ -754,12 +646,13 @@ function viewBlBook(i) {
   if (db && db.year) subParts.push(esc(db.year));
   const subLine = subParts.join(" · ");
 
-  // 速读卡：书籍定位 + 核心观点 + 重点清单（热门划线 top3，带划线人数）
+  // ====== 数据准备：从框架/豆瓣/热门划线中提取学习内容 ======
   const positionText = b.recommend || (db && db.intro ? db.intro.split(/[。！？\n]/)[0] : "");
-  let viewpointText = (db && db.intro) ? db.intro : (fw && fw.coreQuestion ? fw.coreQuestion : (b.recommend || ""));
-  if (viewpointText.length > 120) viewpointText = viewpointText.slice(0, 120) + "…";
-  // 重点清单：热门划线按人数取 top3（强归一化匹配书名，避免标点/空格差异漏配）
-  let scMarks = "";
+  let coreInsight = (db && db.intro) ? db.intro : (fw && fw.coreQuestion ? fw.coreQuestion : (b.recommend || ""));
+  if (coreInsight.length > 150) coreInsight = coreInsight.slice(0, 150) + "…";
+
+  // 热门划线 top3
+  let scMarks = [];
   if (typeof HOT_MARKS !== "undefined") {
     const t = normTitle(b.title);
     const hm = HOT_MARKS.find((h) => {
@@ -767,26 +660,93 @@ function viewBlBook(i) {
       return cs.some((c) => c && c === t);
     });
     if (hm && hm.marks && hm.marks.length) {
-      const top = [...hm.marks].sort((x, y) => y.count - x.count).slice(0, 3);
-      scMarks = `
-      <div class="bl-sc-row">
-        <span class="bl-sc-label">重点清单</span>
-        <ul class="bl-sc-marks">
-          ${top.map((m) => `<li class="bl-sc-mark"><span class="bl-sc-count">〔${m.count.toLocaleString()}人〕</span><span class="bl-sc-quote">${esc(m.text)}</span></li>`).join("")}
-        </ul>
-      </div>`;
+      scMarks = [...hm.marks].sort((x, y) => y.count - x.count).slice(0, 3);
     }
   }
-  const speedCard = `
-  <div class="bl-speedcard">
-    <div class="bl-sc-head"><span class="bl-sc-kicker">⚡</span><h2>速读卡</h2></div>
-    ${positionText ? `<div class="bl-sc-row"><span class="bl-sc-label">书籍定位</span><p class="bl-sc-text">${esc(positionText)}</p></div>` : ""}
-    ${viewpointText ? `<div class="bl-sc-row"><span class="bl-sc-label">核心观点</span><p class="bl-sc-text">${esc(viewpointText)}</p></div>` : ""}
-    ${scMarks}
-  </div>`;
 
-  // 阅读框架、热门笔记、热门划线已移除（用户要求精简）
+  // 从框架数据中提取学习章节内容
+  const takeaways = (fw && fw.takeaways) || [];
+  const limitsText = (fw && fw.limits) || "";
+  const howToRead = fw && fw.howToRead ? fw.howToRead : null;
+  const bgIntro = (fw && fw.background && fw.background.intro) || "";
+  const logicIntro = (fw && fw.logic && fw.logic.intro) || "";
+  const volumes = (fw && fw.logic && fw.logic.volumes) || [];
+  const aboutSignificance = (fw && fw.about && fw.about.significance) || "";
 
+  // ====== 构建交互式学习页面 ======
+  // 学习章节：有框架数据的书展示完整学习路径，没有的展示精简版
+  const hasLearningContent = fw && (takeaways.length || volumes.length || limitsText);
+
+  // Chapter 卡片渲染器
+  const learnCard = (num, emoji, title, summary, bodyHtml, open = false) => `
+    <details class="learn-card ${open ? "open" : ""}" ${open ? "open" : ""}>
+      <summary><span class="learn-kicker">${String(num).padStart(2, "0")}</span><span class="learn-emoji">${emoji}</span><h3>${esc(title)}</h3><span class="learn-sum">${esc(summary)}</span><span class="learn-chev">▾</span></summary>
+      <div class="learn-body">${bodyHtml}</div>
+    </details>`;
+
+  let learningSections = "";
+
+  if (hasLearningContent) {
+    // Ch01: 这本书在解决什么问题？
+    const ch01Body = `
+      <div class="learn-problem">
+        ${coreInsight ? `<p class="learn-problem-q">${esc(coreInsight)}</p>` : ""}
+        ${aboutSignificance ? `<p class="learn-problem-a"><span class="learn-label">定位</span>${esc(aboutSignificance)}</p>` : ""}
+        ${bgIntro ? `<p class="learn-problem-bg"><span class="learn-label">背景</span>${esc(bgIntro)}</p>` : ""}
+      </div>`;
+    learningSections += learnCard(01, "🎯", "这本书在解决什么问题？",
+      "先搞清楚作者在回答什么问题，再决定要不要读",
+      ch01Body, true);
+
+    // Ch02: 核心方法与模型
+    if (volumes.length) {
+      const volCards = volumes.map((v) => `
+        <div class="learn-vol">
+          <div class="learn-vol-no">${esc(v.no)}</div>
+          <div class="learn-vol-body">
+            <h4>${esc(v.title)}</h4>
+            <ul>${(v.points || []).map((p) => `<li>${esc(p)}</li>`).join("")}</ul>
+          </div>
+        </div>`).join("");
+      const ch02Body = `
+        ${logicIntro ? `<p class="learn-intro">${esc(logicIntro)}</p>` : ""}
+        <div class="learn-vols">${volCards}</div>`;
+      learningSections += learnCard(02, "🔬", "核心方法与模型",
+        "全书骨架——每部分在论证什么、用什么方法",
+        ch02Body);
+    }
+
+    // Ch03: 颠覆性观点（从 takeaways 中提炼）
+    if (takeaways.length) {
+      const ch03Body = `<ol class="learn-takeaways">
+        ${takeaways.slice(0, 8).map((t) => `<li>${esc(t)}</li>`).join("")}
+      </ol>`;
+      learningSections += learnCard(03, "💡", "颠覆性观点",
+        ` ${takeaways.length} 个可能颠覆你认知的主张`,
+        ch03Body);
+    }
+
+    // Ch04: 怎么读（阅读策略）
+    if (howToRead) {
+      const ch04Body = `
+        ${howToRead.must ? `<div class="read-col"><div class="read-h">✅ 必读核心</div>${howToRead.must.map((x) => `<div class="read-item">${esc(x)}</div>`).join("")}</div>` : ""}
+        ${howToRead.skip ? `<div class="read-col"><div class="read-h">⏭ 可略过</div>${howToRead.skip.map((x) => `<div class="read-item">${esc(x)}</div>`).join("")}</div>` : ""}
+        ${howToRead.order ? `<div class="read-col"><div class="read-h">🧭 建议顺序</div><div class="read-item">${esc(howToRead.order)}</div></div>` : ""}`;
+      learningSections += learnCard(04, "🗺️", "怎么读效率最高",
+        "不是每页都值得花同样时间，这里有阅读策略",
+        ch04Body);
+    }
+
+    // Ch05: 局限与边界
+    if (limitsText) {
+      const ch05Body = `<p class="learn-limits">${esc(limitsText)}</p>`;
+      learningSections += learnCard(05, "⚠️", "局限与边界",
+        "什么情况下这本书的结论不适用",
+        ch05Body);
+    }
+  }
+
+  // ====== 组装完整页面 ======
   return `
   <section class="section wrap fade-in">
     <div class="detail-bar">
@@ -796,20 +756,42 @@ function viewBlBook(i) {
       <button class="back-btn" onclick="if(_returnCat){location.hash='#/booklist'}else{location.hash='#/booklist';_returnCat='${esc(catName)}'}"><span class="bk-arrow">←</span>返回</button>
     </div>
 
-    <!-- Hero：左封面 + 右信息（豆瓣式：评分 + 短介绍） -->
-    <div class="bl-detail-hero ${b.cover ? "has-cover" : ""}">
-      ${b.cover ? `<div class="bl-detail-cover"><img src="${esc(b.cover)}" alt="${esc(b.title)}" loading="lazy"></div>` : ""}
-      <div class="bl-detail-right">
+    <!-- Hero：封面 + 核心信息 -->
+    <div class="bl-hero-new ${b.cover ? "has-cover" : ""}">
+      ${b.cover ? `<div class="bl-hero-cover"><img src="${esc(b.cover)}" alt="${esc(b.title)}" loading="lazy"></div>` : ""}
+      <div class="bl-hero-info">
         <h1>${esc(b.title)}</h1>
-        <div class="bl-detail-sub"><span class="bl-detail-author">${subLine}</span></div>
+        <div class="bl-hero-sub">${subLine}</div>
         ${doubanHtml}
         <div class="bl-cats">${catChips}</div>
+        ${positionText ? `<p class="bl-hero-one-line"><span class="bl-hero-label">一句话</span>${esc(positionText)}</p>` : ""}
       </div>
     </div>
 
-    ${speedCard}
+    <!-- ⚡ 速读卡：30秒看懂这本书 -->
+    <div class="speed-card-new">
+      <div class="speed-head"><span class="speed-kicker">⚡</span><h2>速读卡</h2><span class="speed-sub">30 秒判断值不值得读</span></div>
+      <div class="speed-body">
+        ${coreInsight ? `<div class="speed-row"><span class="speed-label">最狠的观点</span><p class="speed-text">${esc(coreInsight)}</p></div>` : ""}
+        ${scMarks.length ? `<div class="speed-row speed-marks">
+          <span class="speed-label">大家都在划</span>
+          <ul class="speed-mark-list">
+            ${scMarks.map((m) => `<li><span class="mark-count">〔${m.count.toLocaleString()}人〕</span><span class="mark-quote">${esc(m.text)}</span></li>`).join("")}
+          </ul>
+        </div>` : ""}
+      </div>
+    </div>
+
+    <!-- 📖 交互式学习章节（仅当有框架数据时显示） -->
+    ${learningSections ? `<div class="learn-chapters">
+      <div class="chapters-head"><span class="chapters-kicker">📖</span><h2>交互式学习</h2><span class="chapters-sub">像上课一样，一节一节来，不急</span></div>
+      <div class="chapters-list">${learningSections}</div>
+    </div>` : ""}
+
+    <!-- 📱 公众号解读 -->
     ${linkBtn ? `<div class="bl-gzh-wrap">${linkBtn}</div>` : ""}
-    ${fw ? `<details class="bl-fw"><summary><span class="bl-fw-sum">📚 深度阅读框架 · 七节（点开看全书脉络）</span><span class="bl-fw-chev">▾</span></summary><div class="bl-fw-body">${renderBookFramework(fw)}</div></details>` : ""}
+
+    <!-- 🕸️ 知识网络关联 -->
     ${bookRelatedThemesHtml(b)}
   </section>`;
 }
@@ -882,43 +864,65 @@ function bookRelatedThemesHtml(b) {
 }
 
 /* ---------- 搜索：三类结果（节点主题 / 书籍 / 观点碎片） ---------- */
+
+/* 模糊匹配：把查询拆成词/字，每词独立匹配（OR 逻辑），任一命中即返回 */
+function tokenize(q) {
+  const s = (q || "").trim().toLowerCase();
+  if (!s) return [];
+  // 按空格/常见分隔符拆词，同时保留单字 fallback
+  const parts = s.split(/[\s\/\\,，、;；:：|｜]+/).filter(Boolean);
+  // 如果拆出来只有一个长串，再按单字切（保证"执行力差怎么办"→["执行力差怎么办","执行","力","差","怎","么","办"]）
+  const tokens = [...parts];
+  if (parts.length === 1 && parts[0].length >= 2) {
+    for (let i = 0; i < parts[0].length; i++) {
+      tokens.push(parts[0][i]);
+    }
+  }
+  // 去重
+  return [...new Set(tokens)];
+}
+
+/* 归一化字段值用于匹配 */
+function normField(s) {
+  return normTitle(String(s || ""));
+}
+
+/* 检查一段文本是否被任一 token 命中 */
+function textHits(text, tokens) {
+  if (!tokens.length) return false;
+  const field = normField(text);
+  return tokens.some((tok) => field.includes(tok));
+}
+
 function matchNode(n, q) {
-  const t = normTitle(q);
-  if (normTitle(n.title).includes(t)) return true;
-  if ((n.aliases || []).some((a) => normTitle(a).includes(t))) return true;
-  if (normTitle(n.summary || "").includes(t)) return true;
-  if (
-    (n.perspectives || []).some(
-      (p) =>
-        normTitle(p.viewpoint).includes(t) ||
-        normTitle(p.book).includes(t) ||
-        normTitle(p.method || "").includes(t)
-    )
-  )
-    return true;
-  return false;
+  const tokens = tokenize(q);
+  if (!tokens.length) return true; // 空查询 = 全部匹配
+  const fields = [
+    n.title,
+    ...(n.aliases || []),
+    n.summary || "",
+    ...(n.perspectives || []).flatMap((p) => [p.viewpoint, p.book, p.method || ""]),
+  ];
+  return fields.some((f) => textHits(f, tokens));
 }
 
 function searchBooks(q) {
-  const t = normTitle(q);
+  const tokens = tokenize(q);
   const res = [];
   if (typeof BOOK_LIST === "undefined") return res;
   BOOK_LIST.forEach((b, i) => {
-    const hay = [
-      normTitle(b.title),
-      normTitle(b.author || ""),
-      normTitle(b.recommend || ""),
-      (b.categories || []).map(normTitle).join(" "),
-    ].join(" ");
-    let hit = hay.includes(t);
+    const fields = [
+      b.title,
+      b.author || "",
+      b.recommend || "",
+      ...(b.categories || []),
+    ];
+    let hit = fields.some((f) => textHits(f, tokens));
     if (!hit && typeof BOOK_FRAMEWORKS !== "undefined") {
       const fw = BOOK_FRAMEWORKS[b.title];
       if (fw) {
-        const fwHay = [
-          normTitle(fw.coreQuestion || ""),
-          (fw.takeaways || []).map(normTitle).join(" "),
-        ].join(" ");
-        hit = fwHay.includes(t);
+        const fwFields = [fw.coreQuestion || "", ...(fw.takeaways || [])];
+        hit = fwFields.some((f) => textHits(f, tokens));
       }
     }
     if (hit) res.push({ b, i });
@@ -927,13 +931,13 @@ function searchBooks(q) {
 }
 
 function searchFragments(q) {
-  const t = normTitle(q);
+  const tokens = tokenize(q);
   const res = [];
   if (typeof HOT_MARKS !== "undefined") {
     HOT_MARKS.forEach((hm) => {
       const bt = hm.userTitle || hm.foundTitle || "";
       (hm.marks || []).forEach((m) => {
-        if (normTitle(m.text).includes(t))
+        if (textHits(m.text, tokens))
           res.push({ text: m.text, count: m.count, bookTitle: bt, i: blIndexByTitle(bt) });
       });
     });
@@ -941,7 +945,7 @@ function searchFragments(q) {
   if (typeof BOOK_FRAMEWORKS !== "undefined") {
     Object.entries(BOOK_FRAMEWORKS).forEach(([title, fw]) => {
       (fw.takeaways || []).forEach((tk) => {
-        if (normTitle(tk).includes(t))
+        if (textHits(tk, tokens))
           res.push({ text: tk, count: null, bookTitle: title, i: blIndexByTitle(title) });
       });
     });
@@ -953,9 +957,35 @@ function viewSearch(q) {
   if (typeof KNOWLEDGE_NODES === "undefined") return notFound();
   q = (q || "").trim();
   const hasQ = !!q;
-  const nodeRes = hasQ ? KNOWLEDGE_NODES.filter((n) => matchNode(n, q)) : KNOWLEDGE_NODES.slice();
+  const nodeRes = hasQ ? KNOWLEDGE_NODES.filter((n) => matchNode(n, q)) : [];
   const bookRes = hasQ ? searchBooks(q) : [];
   const fragRes = hasQ ? searchFragments(q) : [];
+
+  // 有查询但全部没命中 → 引导提示
+  if (hasQ && !nodeRes.length && !bookRes.length && !fragRes.length) {
+    return `
+    <section class="section wrap fade-in">
+      <div class="sr-empty-state">
+        <div class="sr-empty-ico">🔍</div>
+        <h2>没有找到「${esc(q)}」相关内容</h2>
+        <p>试试换个关键词，比如搜「执行力」「习惯」「亲密关系」「稀缺」</p>
+        <a class="btn btn-ghost" href="#/graph" style="margin-top:16px">🕸️ 去知识网络逛逛 →</a>
+      </div>
+    </section>`;
+  }
+
+  // 无查询 → 不在此页展示全部节点（那是知识网络的事）
+  if (!hasQ) {
+    return `
+    <section class="section wrap fade-in">
+      <div class="sr-empty-state">
+        <div class="sr-empty-ico">🔍</div>
+        <h2>在顶部搜索框输入关键词开始搜索</h2>
+        <p>可以搜书名、作者、观点碎片、知识网络主题</p>
+        <a class="btn btn-ghost" href="#/graph" style="margin-top:16px">🕸️ 或者直接浏览知识网络 →</a>
+      </div>
+    </section>`;
+  }
 
   const nodeHtml = nodeRes.length
     ? nodeRes
@@ -967,7 +997,7 @@ function viewSearch(q) {
           </a>`
         )
         .join("")
-    : `<div class="sr-empty">没有匹配的主题</div>`;
+    : "";
 
   const bookHtml = bookRes.length
     ? bookRes
@@ -978,7 +1008,7 @@ function viewSearch(q) {
           </a>`
         )
         .join("")
-    : `<div class="sr-empty">没有匹配的书</div>`;
+    : "";
 
   const fragHtml = fragRes.length
     ? fragRes
@@ -992,52 +1022,29 @@ function viewSearch(q) {
           </div>`
         )
         .join("")
-    : `<div class="sr-empty">没有匹配的观点碎片</div>`;
+    : "";
 
-  const body = hasQ
-    ? `
-      <div class="sr-section"><div class="sr-sec-head"><span>🕸️</span> 知识网络主题 · ${nodeRes.length}</div><div class="sr-nodes">${nodeHtml}</div></div>
-      ${bookRes.length ? `<div class="sr-section"><div class="sr-sec-head"><span>📚</span> 书籍 · ${bookRes.length}</div><div class="sr-books">${bookHtml}</div></div>` : ""}
-      ${fragRes.length ? `<div class="sr-section"><div class="sr-sec-head"><span>💡</span> 观点碎片 · ${fragRes.length}</div><div class="sr-frags">${fragHtml}</div></div>` : ""}
-    `
-    : `<div class="sr-section"><div class="sr-sec-head"><span>🕸️</span> 全部主题（点进去看多本书怎么互相印证、怎么打架）</div><div class="sr-nodes">${nodeHtml}</div></div>`;
+  const body = `
+    ${nodeHtml ? `<div class="sr-section"><div class="sr-sec-head"><span>🕸️</span> 知识网络主题 · ${nodeRes.length}</div><div class="sr-nodes">${nodeHtml}</div></div>` : ""}
+    ${bookHtml ? `<div class="sr-section"><div class="sr-sec-head"><span>📚</span> 书籍 · ${bookRes.length}</div><div class="sr-books">${bookHtml}</div></div>` : ""}
+    ${fragHtml ? `<div class="sr-section"><div class="sr-sec-head"><span>💡</span> 观点碎片 · ${fragRes.length}</div><div class="sr-frags">${fragHtml}</div></div>` : ""}
+  `;
 
   return `
   <section class="section wrap fade-in">
-    <div class="search-page-head">
-      <div class="search-page-box">
-        <span class="search-ico">🔍</span>
-        <input id="pageSearch" type="search" placeholder="搜书 / 观点 / 主题，边打边出…" value="${esc(q)}" autocomplete="off" />
-      </div>
-      <div class="search-stats">${hasQ ? `「${esc(q)}」：${nodeRes.length} 主题 · ${bookRes.length} 书 · ${fragRes.length} 观点` : "直接搜，或下滑浏览全部主题"}</div>
-    </div>
+    <div class="search-stats-bar">「${esc(q)}」：${nodeRes.length} 主题 · ${bookRes.length} 书 · ${fragRes.length} 观点</div>
     ${body}
   </section>`;
 }
 
 function initSearch() {
-  const inp = document.getElementById("pageSearch");
-  if (!inp) return;
-  let timer;
-  const go = () => {
-    const v = inp.value.trim();
-    const target = "#/search/" + encodeURIComponent(v);
-    if (target !== location.hash) location.hash = target;
-  };
-  inp.addEventListener("input", () => {
-    clearTimeout(timer);
-    timer = setTimeout(go, 220);
-  });
-  inp.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      clearTimeout(timer);
-      go();
-    }
-  });
-  inp.focus();
-  const v = inp.value;
-  inp.value = "";
-  inp.value = v;
+  /* 搜索结果页不再有独立的搜索框，统一使用顶部 globalSearch */
+  const gs = document.getElementById("globalSearch");
+  if (gs) {
+    // 从 URL hash 中恢复搜索词到顶部输入框
+    const hash = location.hash.replace(/^#\/search\//, "");
+    if (hash) { gs.value = decodeURIComponent(hash); gs.focus(); }
+  }
 }
 
 /* ---------- 知识网络图谱（力导向布局） ---------- */
@@ -1235,6 +1242,12 @@ function router() {
     a.classList.toggle("active", a.dataset.route === route)
   );
 
+  // 非搜索路由时清空顶部搜索框（避免搜索词跨页残留）
+  if (route !== "search") {
+    const gs = document.getElementById("globalSearch");
+    if (gs) gs.value = "";
+  }
+
   // 页面内交互与分页渲染
   if (route === "home") initHome();
   if (route === "category") initCategory();
@@ -1267,16 +1280,25 @@ function init() {
     document.getElementById("mainNav").classList.toggle("open")
   );
 
-  // 顶部常驻搜索框：回车即搜
+  // 顶部常驻搜索框：回车或点按钮即搜
   const gs = document.getElementById("globalSearch");
+  const searchBtn = document.getElementById("searchGoBtn");
+  const doSearch = () => {
+    const v = gs.value.trim();
+    location.hash = "#/search/" + encodeURIComponent(v);
+  };
   if (gs) {
-    gs.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const v = gs.value.trim();
-        location.hash = "#/search/" + encodeURIComponent(v);
-      }
+    gs.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+    // 输入时实时搜索（防抖 250ms）
+    let timer;
+    gs.addEventListener("input", () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (gs.value.trim().length >= 2) doSearch();
+      }, 250);
     });
   }
+  if (searchBtn) searchBtn.addEventListener("click", doSearch);
 
   // header 阴影 & 回到顶部
   const header = document.getElementById("siteHeader");
