@@ -809,6 +809,382 @@ function viewBlBook(i) {
 
     ${speedCard}
     ${linkBtn ? `<div class="bl-gzh-wrap">${linkBtn}</div>` : ""}
+    ${fw ? `<details class="bl-fw"><summary><span class="bl-fw-sum">📚 深度阅读框架 · 七节（点开看全书脉络）</span><span class="bl-fw-chev">▾</span></summary><div class="bl-fw-body">${renderBookFramework(fw)}</div></details>` : ""}
+    ${bookRelatedThemesHtml(b)}
+  </section>`;
+}
+
+/* ============================================================
+   知识网络 / 第二大脑：搜索 · 图谱 · 节点
+   ============================================================ */
+
+/* 书单索引：按书名（强归一化）找 blbook 下标，用于「碎片/节点」跳书 */
+function blIndexByTitle(title) {
+  if (typeof BOOK_LIST === "undefined" || !title) return -1;
+  const t = normTitle(title);
+  if (!t) return -1;
+  let idx = BOOK_LIST.findIndex((b) => normTitle(b.title) === t);
+  if (idx >= 0) return idx;
+  for (let i = 0; i < BOOK_LIST.length; i++) {
+    const k = normTitle(BOOK_LIST[i].title);
+    if (k && (k.startsWith(t) || t.startsWith(k))) return i;
+  }
+  return -1;
+}
+
+/* 一本书挂在哪些知识节点上 */
+function relatedThemesOfBook(b) {
+  if (typeof KNOWLEDGE_NODES === "undefined") return [];
+  const t = normTitle(b.title);
+  return KNOWLEDGE_NODES.filter((n) =>
+    (n.perspectives || []).some((p) => normTitle(p.book) === t)
+  );
+}
+
+/* 书详情页底部：「本书关联主题」+「同主题相关书」 */
+function bookRelatedThemesHtml(b) {
+  const nodes = relatedThemesOfBook(b);
+  if (!nodes.length) return "";
+  const others = [];
+  const seen = new Set();
+  const selfT = normTitle(b.title);
+  nodes.forEach((n) =>
+    (n.perspectives || []).forEach((p) => {
+      const ti = blIndexByTitle(p.book);
+      const k = normTitle(p.book);
+      if (ti >= 0 && k !== selfT && !seen.has(k)) {
+        seen.add(k);
+        others.push({ i: ti, title: p.book });
+      }
+    })
+  );
+  const themeCards = nodes
+    .map((n) => {
+      const ps = n.perspectives.filter((p) => normTitle(p.book) === selfT);
+      const pre = ps.map((p) => `<li>${esc(p.viewpoint)}</li>`).join("");
+      return `<div class="rel-theme" onclick="location.hash='#/node/${n.id}'">
+        <div class="rel-theme-head"><span class="rel-theme-title">${esc(n.title)}</span><span class="rel-theme-go">进入主题 →</span></div>
+        ${pre ? `<ul class="rel-theme-pre">${pre}</ul>` : ""}
+      </div>`;
+    })
+    .join("");
+  const relatedBooks = others.length
+    ? `<div class="rel-books"><div class="rel-books-head">同主题相关书 →</div><div class="rel-books-row">${others
+        .map((o) => `<a class="rel-book-chip" href="#/blbook/${o.i}">${esc(o.title)}</a>`)
+        .join("")}</div></div>`
+    : "";
+  return `<div class="bl-related">
+    <div class="bl-rel-head"><span class="bl-rel-kicker">🕸️</span><h2>本书关联主题 · 第二大脑</h2></div>
+    <p class="bl-rel-sub">这本书的观点，在知识网络里连着这些主题；点进去看多本书怎么互相印证、甚至打架。</p>
+    <div class="rel-themes">${themeCards}</div>
+    ${relatedBooks}
+  </div>`;
+}
+
+/* ---------- 搜索：三类结果（节点主题 / 书籍 / 观点碎片） ---------- */
+function matchNode(n, q) {
+  const t = normTitle(q);
+  if (normTitle(n.title).includes(t)) return true;
+  if ((n.aliases || []).some((a) => normTitle(a).includes(t))) return true;
+  if (normTitle(n.summary || "").includes(t)) return true;
+  if (
+    (n.perspectives || []).some(
+      (p) =>
+        normTitle(p.viewpoint).includes(t) ||
+        normTitle(p.book).includes(t) ||
+        normTitle(p.method || "").includes(t)
+    )
+  )
+    return true;
+  return false;
+}
+
+function searchBooks(q) {
+  const t = normTitle(q);
+  const res = [];
+  if (typeof BOOK_LIST === "undefined") return res;
+  BOOK_LIST.forEach((b, i) => {
+    const hay = [
+      normTitle(b.title),
+      normTitle(b.author || ""),
+      normTitle(b.recommend || ""),
+      (b.categories || []).map(normTitle).join(" "),
+    ].join(" ");
+    let hit = hay.includes(t);
+    if (!hit && typeof BOOK_FRAMEWORKS !== "undefined") {
+      const fw = BOOK_FRAMEWORKS[b.title];
+      if (fw) {
+        const fwHay = [
+          normTitle(fw.coreQuestion || ""),
+          (fw.takeaways || []).map(normTitle).join(" "),
+        ].join(" ");
+        hit = fwHay.includes(t);
+      }
+    }
+    if (hit) res.push({ b, i });
+  });
+  return res;
+}
+
+function searchFragments(q) {
+  const t = normTitle(q);
+  const res = [];
+  if (typeof HOT_MARKS !== "undefined") {
+    HOT_MARKS.forEach((hm) => {
+      const bt = hm.userTitle || hm.foundTitle || "";
+      (hm.marks || []).forEach((m) => {
+        if (normTitle(m.text).includes(t))
+          res.push({ text: m.text, count: m.count, bookTitle: bt, i: blIndexByTitle(bt) });
+      });
+    });
+  }
+  if (typeof BOOK_FRAMEWORKS !== "undefined") {
+    Object.entries(BOOK_FRAMEWORKS).forEach(([title, fw]) => {
+      (fw.takeaways || []).forEach((tk) => {
+        if (normTitle(tk).includes(t))
+          res.push({ text: tk, count: null, bookTitle: title, i: blIndexByTitle(title) });
+      });
+    });
+  }
+  return res.slice(0, 24);
+}
+
+function viewSearch(q) {
+  if (typeof KNOWLEDGE_NODES === "undefined") return notFound();
+  q = (q || "").trim();
+  const hasQ = !!q;
+  const nodeRes = hasQ ? KNOWLEDGE_NODES.filter((n) => matchNode(n, q)) : KNOWLEDGE_NODES.slice();
+  const bookRes = hasQ ? searchBooks(q) : [];
+  const fragRes = hasQ ? searchFragments(q) : [];
+
+  const nodeHtml = nodeRes.length
+    ? nodeRes
+        .map(
+          (n) => `<a class="sr-node" href="#/node/${n.id}">
+            <span class="sr-node-title">${esc(n.title)}</span>
+            <span class="sr-node-sum">${esc(n.summary)}</span>
+            <span class="sr-node-meta">${(n.perspectives || []).length} 个视角 · ${(n.edges || []).length} 条连线</span>
+          </a>`
+        )
+        .join("")
+    : `<div class="sr-empty">没有匹配的主题</div>`;
+
+  const bookHtml = bookRes.length
+    ? bookRes
+        .map(
+          ({ b, i }) => `<a class="sr-book" href="#/blbook/${i}">
+            ${b.cover ? `<img class="sr-book-cover" src="${esc(b.cover)}" alt="" loading="lazy">` : `<span class="sr-book-emoji">📕</span>`}
+            <span class="sr-book-info"><span class="sr-book-title">${esc(b.title)}</span><span class="sr-book-author">${esc(b.author || "")}</span></span>
+          </a>`
+        )
+        .join("")
+    : `<div class="sr-empty">没有匹配的书</div>`;
+
+  const fragHtml = fragRes.length
+    ? fragRes
+        .map(
+          (f) => `<div class="sr-frag">
+            <p class="sr-frag-text">${esc(f.text)}</p>
+            <div class="sr-frag-meta">
+              ${f.i >= 0 ? `<a class="sr-frag-book" href="#/blbook/${f.i}">《${esc(f.bookTitle)}》 ↗</a>` : `<span class="sr-frag-book">《${esc(f.bookTitle)}》</span>`}
+              ${f.count ? `<span class="sr-frag-count">${f.count.toLocaleString()} 人划线</span>` : ""}
+            </div>
+          </div>`
+        )
+        .join("")
+    : `<div class="sr-empty">没有匹配的观点碎片</div>`;
+
+  const body = hasQ
+    ? `
+      <div class="sr-section"><div class="sr-sec-head"><span>🕸️</span> 知识网络主题 · ${nodeRes.length}</div><div class="sr-nodes">${nodeHtml}</div></div>
+      ${bookRes.length ? `<div class="sr-section"><div class="sr-sec-head"><span>📚</span> 书籍 · ${bookRes.length}</div><div class="sr-books">${bookHtml}</div></div>` : ""}
+      ${fragRes.length ? `<div class="sr-section"><div class="sr-sec-head"><span>💡</span> 观点碎片 · ${fragRes.length}</div><div class="sr-frags">${fragHtml}</div></div>` : ""}
+    `
+    : `<div class="sr-section"><div class="sr-sec-head"><span>🕸️</span> 全部主题（点进去看多本书怎么互相印证、怎么打架）</div><div class="sr-nodes">${nodeHtml}</div></div>`;
+
+  return `
+  <section class="section wrap fade-in">
+    <div class="search-page-head">
+      <div class="search-page-box">
+        <span class="search-ico">🔍</span>
+        <input id="pageSearch" type="search" placeholder="搜书 / 观点 / 主题，边打边出…" value="${esc(q)}" autocomplete="off" />
+      </div>
+      <div class="search-stats">${hasQ ? `「${esc(q)}」：${nodeRes.length} 主题 · ${bookRes.length} 书 · ${fragRes.length} 观点` : "直接搜，或下滑浏览全部主题"}</div>
+    </div>
+    ${body}
+  </section>`;
+}
+
+function initSearch() {
+  const inp = document.getElementById("pageSearch");
+  if (!inp) return;
+  let timer;
+  const go = () => {
+    const v = inp.value.trim();
+    const target = "#/search/" + encodeURIComponent(v);
+    if (target !== location.hash) location.hash = target;
+  };
+  inp.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(go, 220);
+  });
+  inp.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      clearTimeout(timer);
+      go();
+    }
+  });
+  inp.focus();
+  const v = inp.value;
+  inp.value = "";
+  inp.value = v;
+}
+
+/* ---------- 知识网络图谱（力导向布局） ---------- */
+const NODE_CLUSTER = {
+  executive: "#6366f1", procrastination: "#6366f1", perfectionism: "#6366f1", habit: "#6366f1", compounding: "#6366f1",
+  "emotional-drain": "#10b981", separation: "#10b981", "people-pleasing": "#10b981", intimacy: "#10b981", nvc: "#10b981",
+  "cognitive-bias": "#f59e0b", scarcity: "#f59e0b", wealth: "#f59e0b",
+};
+
+function computeGraphLayout() {
+  const nodes = KNOWLEDGE_NODES;
+  const W = 820, H = 560, cx = W / 2, cy = H / 2;
+  const pos = {};
+  nodes.forEach((n, i) => {
+    const ang = (i / nodes.length) * Math.PI * 2;
+    pos[n.id] = { x: cx + Math.cos(ang) * 230, y: cy + Math.sin(ang) * 150, vx: 0, vy: 0 };
+  });
+  const edges = [];
+  nodes.forEach((n) => (n.edges || []).forEach((e) => { if (pos[e.to]) edges.push([n.id, e.to]); }));
+  for (let it = 0; it < 500; it++) {
+    for (let i = 0; i < nodes.length; i++)
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = pos[nodes[i].id], b = pos[nodes[j].id];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const d2 = dx * dx + dy * dy || 1;
+        const d = Math.sqrt(d2);
+        const f = 9000 / d2;
+        const fx = (dx / d) * f, fy = (dy / d) * f;
+        a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
+      }
+    edges.forEach(([s, t]) => {
+      const a = pos[s], b = pos[t];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const f = (d - 150) * 0.02;
+      const fx = (dx / d) * f, fy = (dy / d) * f;
+      a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
+    });
+    nodes.forEach((n) => {
+      const p = pos[n.id];
+      p.vx += (cx - p.x) * 0.006;
+      p.vy += (cy - p.y) * 0.006;
+      p.vx *= 0.85; p.vy *= 0.85;
+      p.x = Math.max(70, Math.min(W - 70, p.x + p.vx));
+      p.y = Math.max(54, Math.min(H - 54, p.y + p.vy));
+    });
+  }
+  return { pos, edges, W, H };
+}
+
+function viewGraph() {
+  if (typeof KNOWLEDGE_NODES === "undefined") return notFound();
+  const { pos, edges, W, H } = computeGraphLayout();
+  const r = 30;
+  const edgeSvg = edges
+    .map(([s, t]) => {
+      const a = pos[s], b = pos[t];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const ux = dx / d, uy = dy / d;
+      const x1 = a.x + ux * (r + 4), y1 = a.y + uy * (r + 4);
+      const x2 = b.x - ux * (r + 8), y2 = b.y - uy * (r + 8);
+      return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="rgba(0,0,0,.20)" stroke-width="1.4" marker-end="url(#arrow)"/>`;
+    })
+    .join("");
+  const nodeSvg = KNOWLEDGE_NODES.map((n) => {
+    const p = pos[n.id];
+    const c = NODE_CLUSTER[n.id] || "#6366f1";
+    return `<g class="gnode" onclick="location.hash='#/node/${n.id}'">
+      <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r}" fill="${c}" fill-opacity=".13" stroke="${c}" stroke-width="2"/>
+      <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="6" fill="${c}"/>
+      <text x="${p.x.toFixed(1)}" y="${(p.y + r + 16).toFixed(1)}" text-anchor="middle" class="gnode-label">${esc(n.title)}</text>
+    </g>`;
+  }).join("");
+  const legend = [
+    ["#6366f1", "行动 · 习惯 · 财富"],
+    ["#10b981", "关系 · 沟通 · 情绪"],
+    ["#f59e0b", "认知 · 决策 · 稀缺"],
+  ]
+    .map(([c, l]) => `<span class="lg"><span class="dot" style="background:${c}"></span>${l}</span>`)
+    .join("");
+  const chips = KNOWLEDGE_NODES.map(
+    (n) => `<a class="gt-chip" href="#/node/${n.id}" style="border-color:${NODE_CLUSTER[n.id] || "#6366f1"}55">${esc(n.title)}</a>`
+  ).join("");
+  return `
+  <section class="section wrap fade-in">
+    <div class="section-head">
+      <span class="eyebrow">Knowledge Graph</span>
+      <h2>第二大脑 · 知识网络</h2>
+      <p>每个节点是一个问题主题，挂着多本书的视角（含冲突观点）。点节点看全景，点书跳回书页。</p>
+    </div>
+    <div class="graph-wrap">
+      <svg class="graph-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="知识网络图谱">
+        <defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="rgba(0,0,0,.3)"/></marker></defs>
+        <g class="edges">${edgeSvg}</g>
+        <g class="nodes">${nodeSvg}</g>
+      </svg>
+    </div>
+    <div class="graph-legend">${legend}</div>
+    <div class="graph-themes">${chips}</div>
+  </section>`;
+}
+
+/* ---------- 节点详情（第二大脑） ---------- */
+function viewNode(id) {
+  if (typeof KNOWLEDGE_NODES === "undefined") return notFound();
+  const n = KNOWLEDGE_NODES.find((x) => x.id === id);
+  if (!n) return notFound();
+  const edgeHtml = (n.edges || [])
+    .map((e) => {
+      const to = KNOWLEDGE_NODES.find((x) => x.id === e.to);
+      if (!to) return "";
+      return `<a class="node-edge" href="#/node/${e.to}"><span class="ne-rel">${esc(e.rel)}</span><span class="ne-to">${esc(to.title)} →</span></a>`;
+    })
+    .join("");
+  const group = (stance, label) => {
+    const ps = (n.perspectives || []).filter((p) => p.stance === stance);
+    if (!ps.length) return "";
+    const items = ps
+      .map((p) => {
+        const bi = blIndexByTitle(p.book);
+        const bookLink = bi >= 0 ? `<a class="np-book" href="#/blbook/${bi}">${esc(p.book)} ↗</a>` : `<span class="np-book">${esc(p.book)}</span>`;
+        return `<div class="np-item ${stance === "conflict" ? "np-conflict" : ""}">
+          <div class="np-book-row">${bookLink}${stance === "conflict" ? `<span class="np-tag conflict">冲突视角</span>` : ""}</div>
+          <p class="np-view">${esc(p.viewpoint)}</p>
+          ${p.method ? `<p class="np-method"><span class="np-m-label">做法</span>${esc(p.method)}</p>` : ""}
+        </div>`;
+      })
+      .join("");
+    return `<div class="np-group"><div class="np-group-head ${stance === "conflict" ? "conflict-h" : ""}">${label}</div>${items}</div>`;
+  };
+  const support = group("support", "✅ 支持 / 印证");
+  const nuance = group("nuance", "🟡 补充 / 边界");
+  const conflict = group("conflict", "🔥 冲突 / 不同声音");
+  return `
+  <section class="section wrap fade-in">
+    <div class="detail-bar">
+      <div class="crumb"><a href="#/graph">知识网络</a><span>›</span>${esc(n.title)}</div>
+      <button class="back-btn" onclick="location.hash='#/graph'"><span class="bk-arrow">←</span>返回网络</button>
+    </div>
+    <div class="node-head">
+      <h1>${esc(n.title)}</h1>
+      <p class="node-summary">${esc(n.summary)}</p>
+    </div>
+    ${edgeHtml ? `<div class="node-edges"><div class="ne-label">关联主题</div><div class="ne-list">${edgeHtml}</div></div>` : ""}
+    ${support}${nuance}${conflict}
+    <div class="node-foot"><a class="btn btn-ghost" href="#/graph">🕸️ 回到知识网络图谱</a></div>
   </section>`;
 }
 
@@ -844,6 +1220,9 @@ function router() {
       case "booklist":    html = viewBookList(); route = "booklist"; break;
       case "blbook":      html = viewBlBook(parseInt(parts[1], 10)); route = "blbook"; break;
       case "about":       html = viewAbout(); route = "about"; break;
+      case "search":      html = viewSearch(decodeURIComponent(parts.slice(1).join("/"))); route = "search"; break;
+      case "graph":       html = viewGraph(); route = "graph"; break;
+      case "node":        html = viewNode(parts[1]); route = "node"; break;
       default:            html = notFound();
     }
   }
@@ -862,6 +1241,7 @@ function router() {
   if (route === "tag") initTag();
   if (route === "book") initBook();
   if (route === "booklist") initBookList();
+  if (route === "search") initSearch();
 
   // 关闭移动端菜单
   document.getElementById("mainNav").classList.remove("open");
@@ -886,6 +1266,17 @@ function init() {
   document.getElementById("navToggle").addEventListener("click", () =>
     document.getElementById("mainNav").classList.toggle("open")
   );
+
+  // 顶部常驻搜索框：回车即搜
+  const gs = document.getElementById("globalSearch");
+  if (gs) {
+    gs.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const v = gs.value.trim();
+        location.hash = "#/search/" + encodeURIComponent(v);
+      }
+    });
+  }
 
   // header 阴影 & 回到顶部
   const header = document.getElementById("siteHeader");
