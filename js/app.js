@@ -317,7 +317,7 @@ function viewBook(id) {
       <div class="crumb">
         <a href="#/booklist">精选书单</a><span>›</span><a href="#/booklist" onclick="_returnCat='${esc(catName)}'">${esc(catName)}</a>
       </div>
-      <button class="back-btn" onclick="if(_returnCat){location.hash='#/booklist'}else{location.hash='#/booklist';_returnCat='${esc(catName)}'}"><span class="bk-arrow">←</span>返回</button>
+      <button class="back-btn" onclick="history.back()"><span class="bk-arrow">←</span>返回</button>
     </div>
 
     <div class="bl-detail-hero">
@@ -376,7 +376,7 @@ function viewNote(id) {
           <a href="#/booklist">精选书单</a><span>›</span>
           <a href="#/book/${b.id}">${esc(b.title)}</a>
         </div>
-        <button class="back-btn" onclick="location.hash='#/book/${b.id}'"><span class="bk-arrow">←</span>返回</button>
+        <button class="back-btn" onclick="history.back()"><span class="bk-arrow">←</span>返回</button>
       </div>
 
       <div class="note-hero">
@@ -806,7 +806,7 @@ function viewBlBook(i) {
       <div class="crumb">
         <a href="#/booklist">精选书单</a><span>›</span><a href="#/booklist" onclick="_returnCat='${esc(catName)}'">${esc(catName)}</a>
       </div>
-      <button class="back-btn" onclick="if(_returnCat){location.hash='#/booklist'}else{location.hash='#/booklist';_returnCat='${esc(catName)}'}"><span class="bk-arrow">←</span>返回</button>
+      <button class="back-btn" onclick="history.back()"><span class="bk-arrow">←</span>返回</button>
     </div>
 
     <!-- Hero：封面 + 核心信息 -->
@@ -1415,7 +1415,7 @@ async function viewNode(id) {
   <section class="section wrap fade-in">
     <div class="detail-bar">
       <div class="crumb"><a href="#/graph">知识图谱</a><span>›</span>${esc(n.title)}</div>
-      <button class="back-btn" onclick="location.hash='#/graph'"><span class="bk-arrow">←</span>返回网络</button>
+      <button class="back-btn" onclick="history.back()"><span class="bk-arrow">←</span>返回</button>
     </div>
     <div class="node-head">
       <h1>${esc(n.title)}</h1>
