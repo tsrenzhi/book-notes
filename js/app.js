@@ -1021,20 +1021,53 @@ function scoreBook(b, i, q) {
       for (const tk of fw.takeaways || []) score += scoreText(tk, tokens) * 2;
     }
   }
+
+  /* 搜索热门划线内容（很多书标题不含关键词但划线内容高度相关） */
+  if (typeof HOT_MARKS !== "undefined") {
+    const bt = normTitle(b.title);
+    const hm = HOT_MARKS.find((h) => {
+      const cs = [h.userTitle, h.foundTitle].filter(Boolean).map((s) => normTitle(s));
+      return cs.some((c) => c && c === bt);
+    });
+    if (hm && hm.marks) {
+      let markScore = 0;
+      for (const m of hm.marks) markScore += scoreText(m.text, tokens);
+      if (markScore > 0) score += Math.min(markScore, 8); // 划线匹配封顶8分
+    }
+  }
+
+  /* 知识节点关联加分：如果这本书出现在已匹配节点的perspectives里，大幅加分 */
+  if (typeof KNOWLEDGE_NODES !== "undefined") {
+    const selfT = normTitle(b.title);
+    for (const n of KNOWLEDGE_NODES) {
+      const nodeScore = scoreNode(n, q);
+      if (nodeScore >= 3 && (n.perspectives || []).some((p) => normTitle(p.book) === selfT)) {
+        score += Math.min(nodeScore * 0.6, 15); // 节点匹配则书加分，封顶15
+      }
+    }
+  }
+
   return { b, i, score };
 }
 
-/* 观点碎片搜索（用新 tokenize + 最低分门槛） */
+/* 观点碎片搜索（带噪音惩罚：单字碰上的不相关内容大幅降权） */
 function searchFragments(q) {
   const tokens = tokenize(q);
+  const multiTokens = tokens.filter((x) => x.t.length >= 2);
   const res = [];
   if (typeof HOT_MARKS !== "undefined") {
     HOT_MARKS.forEach((hm) => {
       const bt = hm.userTitle || hm.foundTitle || "";
       (hm.marks || []).forEach((m) => {
         const s = scoreText(m.text, tokens);
-        if (s >= 1.5)
-          res.push({ text: m.text, count: m.count, bookTitle: bt, i: blIndexByTitle(bt), _score: s });
+        /* 噪音惩罚：如果碎片文本没有任何 ≥2字 token 命中，大概率是单字碰上的 → 大幅降权 */
+        let finalS = s;
+        if (multiTokens.length > 0) {
+          const hasMultiHit = multiTokens.some(({ t }) => normTitle(m.text).includes(t));
+          if (!hasMultiHit) finalS *= 0.05; // 单字碰上的直接打到接近0
+        }
+        if (finalS >= 3)
+          res.push({ text: m.text, count: m.count, bookTitle: bt, i: blIndexByTitle(bt), _score: finalS });
       });
     });
   }
@@ -1042,7 +1075,12 @@ function searchFragments(q) {
     Object.entries(BOOK_FRAMEWORKS).forEach(([title, fw]) => {
       (fw.takeaways || []).forEach((tk) => {
         const s = scoreText(tk, tokens);
-        if (s >= 1.5) res.push({ text: tk, count: null, bookTitle: title, i: blIndexByTitle(title), _score: s });
+        let finalS = s;
+        if (multiTokens.length > 0) {
+          const hasMultiHit = multiTokens.some(({ t }) => normTitle(tk).includes(t));
+          if (!hasMultiHit) finalS *= 0.05;
+        }
+        if (finalS >= 3) res.push({ text: tk, count: null, bookTitle: title, i: blIndexByTitle(title), _score: finalS });
       });
     });
   }
@@ -1069,7 +1107,7 @@ function viewSearch(q) {
 
   // 评分 + 过滤 + 排序
   const NODE_MIN = 3;    // 节点最低分门槛
-  const BOOK_MIN = 5;    // 书籍最低分门槛
+  const BOOK_MIN = 3;    // 书籍最低分门槛（降低：允许划线/节点关联匹配的书出现）
 
   const scoredNodes = KNOWLEDGE_NODES.map((n) => ({ n, s: scoreNode(n, q) }))
     .filter((x) => x.s >= NODE_MIN).sort((a, b) => b.s - a.s);
@@ -1240,6 +1278,7 @@ function viewGraph() {
       <h2>第二大脑 · 知识网络</h2>
       <p>每个节点是一个问题主题，挂着多本书的视角（含冲突观点）。点节点看全景，点书跳回书页。</p>
     </div>
+    <div class="graph-themes" style="margin-bottom:20px">${chips}</div>
     <div class="graph-wrap">
       <svg class="graph-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="知识网络图谱">
         <defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="rgba(0,0,0,.3)"/></marker></defs>
@@ -1248,7 +1287,6 @@ function viewGraph() {
       </svg>
     </div>
     <div class="graph-legend">${legend}</div>
-    <div class="graph-themes">${chips}</div>
   </section>`;
 }
 
@@ -1283,6 +1321,36 @@ function viewNode(id) {
   const support = group("support", "✅ 支持 / 印证");
   const nuance = group("nuance", "🟡 补充 / 边界");
   const conflict = group("conflict", "🔥 冲突 / 不同声音");
+
+  /* 🧠 IMA 知识库实操方法（部分节点有额外方法论补充） */
+  let imaMethodsHtml = "";
+  if (id === "executive") {
+    imaMethodsHtml = `
+    <div class="ima-methods">
+      <div class="ima-head">🧠 来自我的知识库 · 提高执行力的具体方法</div>
+      <div class="ima-cards">
+        <div class="ima-card">
+          <span class="ima-card-no">01</span>
+          <h4>少看让你爽的短视频</h4>
+          <p>短视频是精神鸦片——每5~10秒一个情绪刺激，让大脑习惯被动兴奋。结果现实中做选择时觉得"不够爽"就不动了。</p>
+          <p class="ima-action"><strong>做法：</strong>每天给自己设「无视频专注时段」，从30分钟开始，逐步延长到2小时。</p>
+        </div>
+        <div class="ima-card">
+          <span class="ima-card-no">02</span>
+          <h4>把自己当机器：埋头莽干 = 专注力</h4>
+          <p>别等心情好了再干——那是别人给你套的思维牢笼。规划对了就执行，大脑喜欢简单，越蛮干越能释放负压。</p>
+          <p class="ima-action"><strong>做法：</strong>下达命令→设定时限→无视情绪开干。不管心情好坏，先动起来再说。</p>
+        </div>
+        <div class="ima-card">
+          <span class="ima-card-no">03</span>
+          <h4>正向复盘，打破内耗循环</h4>
+          <p>执行力跟不上认知 → 认知变内耗 → 越内耗越没底气 → 越没底气越不动。打破它的钥匙是复盘。</p>
+          <p class="ima-action"><strong>做法：</strong>每晚3分钟：①今天做成了什么（继续保持）②哪里可以改进③明天最重要的一件事。</p>
+        </div>
+      </div>
+    </div>`;
+  }
+
   return `
   <section class="section wrap fade-in">
     <div class="detail-bar">
@@ -1295,6 +1363,7 @@ function viewNode(id) {
     </div>
     ${edgeHtml ? `<div class="node-edges"><div class="ne-label">关联主题</div><div class="ne-list">${edgeHtml}</div></div>` : ""}
     ${support}${nuance}${conflict}
+    ${imaMethodsHtml}
     <div class="node-foot"><a class="btn btn-ghost" href="#/graph">🕸️ 回到知识网络图谱</a></div>
   </section>`;
 }
