@@ -673,78 +673,132 @@ function viewBlBook(i) {
   const volumes = (fw && fw.logic && fw.logic.volumes) || [];
   const aboutSignificance = (fw && fw.about && fw.about.significance) || "";
 
-  // ====== 构建交互式学习页面 ======
-  // 学习章节：有框架数据的书展示完整学习路径，没有的展示精简版
+  // ====== 构建交互式学习页面（课程式体验） ======
   const hasLearningContent = fw && (takeaways.length || volumes.length || limitsText);
 
-  // Chapter 卡片渲染器
-  const learnCard = (num, emoji, title, summary, bodyHtml, open = false) => `
-    <details class="learn-card ${open ? "open" : ""}" ${open ? "open" : ""}>
-      <summary><span class="learn-kicker">${String(num).padStart(2, "0")}</span><span class="learn-emoji">${emoji}</span><h3>${esc(title)}</h3><span class="learn-sum">${esc(summary)}</span><span class="learn-chev">▾</span></summary>
-      <div class="learn-body">${bodyHtml}</div>
-    </details>`;
+  /* 课程式章节渲染器：
+     参考设计：编号徽章(01) + emoji + 大问题标题 + 口语化引导语 + 卡片式正文 */
+  const courseChapter = (num, emoji, question, guide, bodyHtml) => `
+    <article class="course-chapter" data-ch="${num}">
+      <div class="course-ch-head">
+        <span class="course-badge">${String(num).padStart(2, "0")}</span>
+        <div class="course-ch-title">
+          <span class="course-ch-emoji">${emoji}</span>
+          <h3>${esc(question)}</h3>
+        </div>
+        <span class="course-ch-guide">${esc(guide)}</span>
+      </div>
+      <div class="course-ch-body">${bodyHtml}</div>
+    </article>`;
 
   let learningSections = "";
 
   if (hasLearningContent) {
-    // Ch01: 这本书在解决什么问题？
-    const ch01Body = `
-      <div class="learn-problem">
-        ${coreInsight ? `<p class="learn-problem-q">${esc(coreInsight)}</p>` : ""}
-        ${aboutSignificance ? `<p class="learn-problem-a"><span class="learn-label">定位</span>${esc(aboutSignificance)}</p>` : ""}
-        ${bgIntro ? `<p class="learn-problem-bg"><span class="learn-label">背景</span>${esc(bgIntro)}</p>` : ""}
-      </div>`;
-    learningSections += learnCard(01, "🎯", "这本书在解决什么问题？",
-      "先搞清楚作者在回答什么问题，再决定要不要读",
-      ch01Body, true);
+    // ── Ch01：问题驱动开场 ──
+    const ch01Cards = [];
+    // 核心问题拆成卡片（如果有背景数据）
+    if (fw.background && fw.background.items) {
+      ch01Cards.push(...fw.background.items.map((it) => `
+        <div class="insight-card">
+          <div class="insight-card-title">${esc(it.name)}</div>
+          <ul class="insight-card-points">${(it.points||[]).map(p=>`<li>${esc(p)}</li>`).join("")}</ul>
+        </div>`));
+    }
+    // 定位 + 背景叙述
+    const ch01Narrative = [];
+    if (coreInsight) ch01Narrative.push(`<div class="narrative-block"><p>${esc(coreInsight)}</p></div>`);
+    if (aboutSignificance) ch01Narrative.push(`<div class="narrative-tag"><span class="narrative-label">📍 定位</span><span>${esc(aboutSignificance)}</span></div>`);
+    if (bgIntro) ch01Narrative.push(`<div class="narrative-tag"><span class="narrative-label">🎬 背景</span><span>${esc(bgIntro)}</span></div>`);
 
-    // Ch02: 核心方法与模型
+    const ch01Body = `
+      <div class="narrative">${ch01Narrative.join("")}</div>
+      ${ch01Cards.length ? `<div class="insight-grid">${ch01Cards.join("")}</div>` : ""}`;
+    learningSections += courseChapter(1, "🎯",
+      "这本书到底在解决什么问题？",
+      "先搞懂作者想回答什么，再决定要不要读",
+      ch01Body);
+
+    // ── Ch02：核心方法（卷结构）──
     if (volumes.length) {
-      const volCards = volumes.map((v) => `
-        <div class="learn-vol">
-          <div class="learn-vol-no">${esc(v.no)}</div>
-          <div class="learn-vol-body">
+      const volCards = volumes.map((v, idx) => `
+        <div class="method-card" style="--delay:${idx * 0.06}s">
+          <div class="method-card-no">${esc(v.no)}</div>
+          <div class="method-card-body">
             <h4>${esc(v.title)}</h4>
-            <ul>${(v.points || []).map((p) => `<li>${esc(p)}</li>`).join("")}</ul>
+            <p class="method-card-desc">${(v.points||[]).map(p=>esc(p)).join(" ")}</p>
           </div>
         </div>`).join("");
       const ch02Body = `
-        ${logicIntro ? `<p class="learn-intro">${esc(logicIntro)}</p>` : ""}
-        <div class="learn-vols">${volCards}</div>`;
-      learningSections += learnCard(02, "🔬", "核心方法与模型",
-        "全书骨架——每部分在论证什么、用什么方法",
+        ${logicIntro ? `<p class="course-intro">${esc(logicIntro)}</p>` : ""}
+        <div class="method-chain">${volCards}</div>`;
+      learningSections += courseChapter(2, "🔬",
+        volumes.length > 1 ? "从一根针到整个国家——财富是怎么被生产出来的？" : "核心方法是什么？",
+        "全书骨架，每部分在论证什么、用什么方法",
         ch02Body);
     }
 
-    // Ch03: 颠覆性观点（从 takeaways 中提炼）
+    // ── Ch03：颠覆性观点 ──
     if (takeaways.length) {
-      const ch03Body = `<ol class="learn-takeaways">
-        ${takeaways.slice(0, 8).map((t) => `<li>${esc(t)}</li>`).join("")}
-      </ol>`;
-      learningSections += learnCard(03, "💡", "颠覆性观点",
-        ` ${takeaways.length} 个可能颠覆你认知的主张`,
+      const insightCards = takeaways.slice(0, 8).map((t, idx) => `
+        <div class="takeaway-card" style="--delay:${idx * 0.05}s">
+          <span class="takeaway-icon">💡</span>
+          <p class="takeaway-text">${esc(t)}</p>
+        </div>`).join("");
+      const ch03Body = `<div class="takeaway-grid">${insightCards}</div>`;
+      learningSections += courseChapter(3, "💡",
+        takeaways.length > 3 ? `读完你会被这${takeaways.length}个观点颠覆认知` : "核心观点是什么？",
+        `${takeaways.length} 个可能改变你想法的主张`,
         ch03Body);
     }
 
-    // Ch04: 怎么读（阅读策略）
+    // ── Ch04：怎么读 ──
     if (howToRead) {
-      const ch04Body = `
-        ${howToRead.must ? `<div class="read-col"><div class="read-h">✅ 必读核心</div>${howToRead.must.map((x) => `<div class="read-item">${esc(x)}</div>`).join("")}</div>` : ""}
-        ${howToRead.skip ? `<div class="read-col"><div class="read-h">⏭ 可略过</div>${howToRead.skip.map((x) => `<div class="read-item">${esc(x)}</div>`).join("")}</div>` : ""}
-        ${howToRead.order ? `<div class="read-col"><div class="read-h">🧭 建议顺序</div><div class="read-item">${esc(howToRead.order)}</div></div>` : ""}`;
-      learningSections += learnCard(04, "🗺️", "怎么读效率最高",
-        "不是每页都值得花同样时间，这里有阅读策略",
+      const readCards = [];
+      if (howToRead.must && howToRead.must.length) {
+        readCards.push(`<div class="read-card read-must">
+          <span class="read-card-icon">✅</span><strong>必读核心</strong>
+          <ul>${howToRead.must.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+        </div>`);
+      }
+      if (howToRead.skip && howToRead.skip.length) {
+        readCards.push(`<div class="read-card read-skip">
+          <span class="read-card-icon">⏭</span><strong>可略过</strong>
+          <ul>${howToRead.skip.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+        </div>`);
+      }
+      if (howToRead.order) {
+        readCards.push(`<div class="read-card read-order">
+          <span class="read-card-icon">🧭</span><strong>建议顺序</strong>
+          <p>${esc(howToRead.order)}</p>
+        </div>`);
+      }
+      const ch04Body = `<div class="read-grid">${readCards.join("")}</div>`;
+      learningSections += courseChapter(4, "🗺️",
+        "这本书太厚了，怎么读效率最高？",
+        "不是每页都值得花同样时间",
         ch04Body);
     }
 
-    // Ch05: 局限与边界
+    // ── Ch05：局限与边界 ──
     if (limitsText) {
-      const ch05Body = `<p class="learn-limits">${esc(limitsText)}</p>`;
-      learningSections += learnCard(05, "⚠️", "局限与边界",
-        "什么情况下这本书的结论不适用",
+      // 把局限文本按序号拆成卡片
+      const limitItems = limitsText.split(/[；;]\s*/).filter(s => s.trim()).map(s => s.trim());
+      const limitCards = limitItems.map((item, idx) => `
+        <div class="limit-card" style="--delay:${idx * 0.06}s">
+          <span class="limit-icon">⚠️</span>
+          <p>${esc(item.replace(/^[①②③④⑤⑥⑦⑧⑨⑩\d+[、.\s]*/, ""))}</p>
+        </div>`).join("");
+      const ch05Body = `<div class="limit-grid">${limitCards}</div>`;
+      learningSections += courseChapter(5, "⚠️",
+        "作者没想到的：哪些结论已经过时了？",
+        "什么情况下这本书的建议不适用",
         ch05Body);
     }
   }
+
+  // 章节总数（用于进度条）
+  const totalChapters = hasLearningContent ?
+    [!!(fw&&(fw.background&&fw.background.intro)||coreInsight), !!volumes.length, !!takeaways.length, !!howToRead, !!limitsText].filter(Boolean).length : 0;
 
   // ====== 组装完整页面 ======
   return `
@@ -782,10 +836,17 @@ function viewBlBook(i) {
       </div>
     </div>
 
-    <!-- 📖 交互式学习章节（仅当有框架数据时显示） -->
-    ${learningSections ? `<div class="learn-chapters">
-      <div class="chapters-head"><span class="chapters-kicker">📖</span><h2>交互式学习</h2><span class="chapters-sub">像上课一样，一节一节来，不急</span></div>
-      <div class="chapters-list">${learningSections}</div>
+    <!-- 📖 交互式学习章节（课程式体验，仅当有框架数据时显示） -->
+    ${learningSections ? `<div class="course-wrap">
+      <div class="course-head">
+        <span class="course-head-ico">📖</span>
+        <div class="course-head-text">
+          <h2>图解读书 · 交互式学习</h2>
+          <p class="course-head-sub">像上课一样，一节一节来，不急</p>
+        </div>
+      </div>
+      <div class="course-chapters">${learningSections}</div>
+      ${totalChapters > 1 ? `<nav class="course-progress" aria-label="学习进度">${Array.from({length: totalChapters}, (_, i) => `<a href="#" class="progress-dot" data-goto="${i+1}" title="第${i+1}节"><span class="dot-num">${i+1}</span></a>`).join("")}</nav>` : ""}
     </div>` : ""}
 
     <!-- 📱 公众号解读 -->
@@ -863,73 +924,107 @@ function bookRelatedThemesHtml(b) {
   </div>`;
 }
 
-/* ---------- 搜索：三类结果（节点主题 / 书籍 / 观点碎片） ---------- */
+/* ---------- 搜索：带相关性评分的模糊匹配 ---------- */
 
-/* 模糊匹配：把查询拆成词/字，每词独立匹配（OR 逻辑），任一命中即返回 */
+/* 分词：返回 [{t:token, w:weight}] 长词权重更高，单字极低 */
 function tokenize(q) {
   const s = (q || "").trim().toLowerCase();
   if (!s) return [];
-  // 按空格/常见分隔符拆词，同时保留单字 fallback
   const parts = s.split(/[\s\/\\,，、;；:：|｜]+/).filter(Boolean);
-  // 如果拆出来只有一个长串，再按单字切（保证"执行力差怎么办"→["执行力差怎么办","执行","力","差","怎","么","办"]）
-  const tokens = [...parts];
-  if (parts.length === 1 && parts[0].length >= 2) {
-    for (let i = 0; i < parts[0].length; i++) {
-      tokens.push(parts[0][i]);
-    }
+  const tokens = [];
+  // 原始分词（多字词优先，权重=长度）
+  for (const p of parts) {
+    if (p.length >= 2) tokens.push({ t: p, w: p.length });
   }
-  // 去重
-  return [...new Set(tokens)];
-}
-
-/* 归一化字段值用于匹配 */
-function normField(s) {
-  return normTitle(String(s || ""));
-}
-
-/* 检查一段文本是否被任一 token 命中 */
-function textHits(text, tokens) {
-  if (!tokens.length) return false;
-  const field = normField(text);
-  return tokens.some((tok) => field.includes(tok));
-}
-
-function matchNode(n, q) {
-  const tokens = tokenize(q);
-  if (!tokens.length) return true; // 空查询 = 全部匹配
-  const fields = [
-    n.title,
-    ...(n.aliases || []),
-    n.summary || "",
-    ...(n.perspectives || []).flatMap((p) => [p.viewpoint, p.book, p.method || ""]),
-  ];
-  return fields.some((f) => textHits(f, tokens));
-}
-
-function searchBooks(q) {
-  const tokens = tokenize(q);
-  const res = [];
-  if (typeof BOOK_LIST === "undefined") return res;
-  BOOK_LIST.forEach((b, i) => {
-    const fields = [
-      b.title,
-      b.author || "",
-      b.recommend || "",
-      ...(b.categories || []),
-    ];
-    let hit = fields.some((f) => textHits(f, tokens));
-    if (!hit && typeof BOOK_FRAMEWORKS !== "undefined") {
-      const fw = BOOK_FRAMEWORKS[b.title];
-      if (fw) {
-        const fwFields = [fw.coreQuestion || "", ...(fw.takeaways || [])];
-        hit = fwFields.some((f) => textHits(f, tokens));
+  // 如果只有一个长串，拆出有意义的子串（长度2~4）
+  if (parts.length === 1 && parts[0].length >= 3) {
+    const base = parts[0];
+    for (let len = Math.min(base.length - 1, 4); len >= 2; len--) {
+      for (let i = 0; i <= base.length - len; i++) {
+        const sub = base.slice(i, i + len);
+        if (!tokens.some((x) => x.t === sub)) tokens.push({ t: sub, w: len * 0.6 });
       }
     }
-    if (hit) res.push({ b, i });
-  });
-  return res;
+  }
+  // 单字 fallback（极低权重 0.3，仅防止完全搜不到）
+  if (parts.length === 1 && parts[0].length >= 2) {
+    for (const ch of parts[0]) {
+      if (!tokens.some((x) => x.t === ch)) tokens.push({ t: ch, w: 0.3 });
+    }
+  }
+  return tokens;
 }
 
+/* 计算一段文本被 token 列表命中的加权分数 */
+function scoreText(text, tokens) {
+  if (!tokens.length || !text) return 0;
+  const field = normTitle(String(text));
+  let score = 0;
+  for (const { t, w } of tokens) if (field.includes(t)) score += w;
+  return score;
+}
+
+/* 节点评分：标题/别名 >> 观点内容 >> 单字噪音惩罚 */
+function scoreNode(n, q) {
+  const tokens = tokenize(q);
+  if (!tokens.length) return 0;
+  const qNorm = normTitle(q);
+
+  // 标题精确匹配 = 最高优先级
+  if (normTitle(n.title) === qNorm || n.title === q.trim()) return 100;
+  if (normTitle(n.title).includes(qNorm)) return 80;
+
+  let score = 0;
+  // 标题 / 别名（高权重字段 ×5/×4）
+  score += scoreText(n.title, tokens) * 5;
+  for (const a of n.aliases || []) score += scoreText(a, tokens) * 4;
+  // 观点内容（中权重 ×1~1.5）
+  score += scoreText(n.summary || "", tokens) * 1;
+  for (const p of n.perspectives || []) {
+    score += scoreText(p.viewpoint, tokens) * 1.5;
+    score += scoreText(p.book, tokens) * 0.8;
+    score += scoreText(p.method || "", tokens) * 1;
+  }
+
+  /* 关键：如果标题和别名里没有任何 ≥2字 token 命中，
+     说明只是单字碰上了 → 极大概率是噪音，大幅降权 */
+  const multiTokens = tokens.filter((x) => x.t.length >= 2);
+  const titleHitsAny = multiTokens.some(
+    ({ t }) =>
+      normTitle(n.title).includes(t) ||
+      (n.aliases || []).some((a) => normTitle(a).includes(t))
+  );
+  if (!titleHitsAny && multiTokens.length > 0) score *= 0.08;
+
+  return score;
+}
+
+/* 书籍评分 */
+function scoreBook(b, i, q) {
+  const tokens = tokenize(q);
+  if (!tokens.length) return { b, i, score: 0 };
+  const qNorm = normTitle(q);
+
+  if (normTitle(b.title) === qNorm || b.title === q.trim()) return { b, i, score: 100 };
+  if (normTitle(b.title).includes(qNorm)) return { b, i, score: 80 };
+
+  let score = 0;
+  score += scoreText(b.title, tokens) * 5;
+  score += scoreText(b.author || "", tokens) * 3;
+  score += scoreText(b.recommend || "", tokens) * 2;
+  for (const c of b.categories || []) score += scoreText(c, tokens) * 2;
+
+  if (typeof BOOK_FRAMEWORKS !== "undefined") {
+    const fw = BOOK_FRAMEWORKS[b.title];
+    if (fw) {
+      score += scoreText(fw.coreQuestion || "", tokens) * 3;
+      for (const tk of fw.takeaways || []) score += scoreText(tk, tokens) * 2;
+    }
+  }
+  return { b, i, score };
+}
+
+/* 观点碎片搜索（用新 tokenize + 最低分门槛） */
 function searchFragments(q) {
   const tokens = tokenize(q);
   const res = [];
@@ -937,44 +1032,29 @@ function searchFragments(q) {
     HOT_MARKS.forEach((hm) => {
       const bt = hm.userTitle || hm.foundTitle || "";
       (hm.marks || []).forEach((m) => {
-        if (textHits(m.text, tokens))
-          res.push({ text: m.text, count: m.count, bookTitle: bt, i: blIndexByTitle(bt) });
+        const s = scoreText(m.text, tokens);
+        if (s >= 1.5)
+          res.push({ text: m.text, count: m.count, bookTitle: bt, i: blIndexByTitle(bt), _score: s });
       });
     });
   }
   if (typeof BOOK_FRAMEWORKS !== "undefined") {
     Object.entries(BOOK_FRAMEWORKS).forEach(([title, fw]) => {
       (fw.takeaways || []).forEach((tk) => {
-        if (textHits(tk, tokens))
-          res.push({ text: tk, count: null, bookTitle: title, i: blIndexByTitle(title) });
+        const s = scoreText(tk, tokens);
+        if (s >= 1.5) res.push({ text: tk, count: null, bookTitle: title, i: blIndexByTitle(title), _score: s });
       });
     });
   }
-  return res.slice(0, 24);
+  return res.sort((a, b) => (b._score || 0) - (a._score || 0)).slice(0, 24);
 }
 
 function viewSearch(q) {
   if (typeof KNOWLEDGE_NODES === "undefined") return notFound();
   q = (q || "").trim();
   const hasQ = !!q;
-  const nodeRes = hasQ ? KNOWLEDGE_NODES.filter((n) => matchNode(n, q)) : [];
-  const bookRes = hasQ ? searchBooks(q) : [];
-  const fragRes = hasQ ? searchFragments(q) : [];
 
-  // 有查询但全部没命中 → 引导提示
-  if (hasQ && !nodeRes.length && !bookRes.length && !fragRes.length) {
-    return `
-    <section class="section wrap fade-in">
-      <div class="sr-empty-state">
-        <div class="sr-empty-ico">🔍</div>
-        <h2>没有找到「${esc(q)}」相关内容</h2>
-        <p>试试换个关键词，比如搜「执行力」「习惯」「亲密关系」「稀缺」</p>
-        <a class="btn btn-ghost" href="#/graph" style="margin-top:16px">🕸️ 去知识网络逛逛 →</a>
-      </div>
-    </section>`;
-  }
-
-  // 无查询 → 不在此页展示全部节点（那是知识网络的事）
+  // 无查询 → 引导去搜索或知识网络
   if (!hasQ) {
     return `
     <section class="section wrap fade-in">
@@ -987,10 +1067,34 @@ function viewSearch(q) {
     </section>`;
   }
 
-  const nodeHtml = nodeRes.length
-    ? nodeRes
+  // 评分 + 过滤 + 排序
+  const NODE_MIN = 3;    // 节点最低分门槛
+  const BOOK_MIN = 5;    // 书籍最低分门槛
+
+  const scoredNodes = KNOWLEDGE_NODES.map((n) => ({ n, s: scoreNode(n, q) }))
+    .filter((x) => x.s >= NODE_MIN).sort((a, b) => b.s - a.s);
+  const scoredBooks = (typeof BOOK_LIST !== "undefined" ? BOOK_LIST : [])
+    .map((b, i) => scoreBook(b, i, q)).filter((x) => x.score >= BOOK_MIN)
+    .sort((a, b) => b.score - a.score);
+  const fragRes = searchFragments(q);
+
+  // 全没命中 → 引导提示
+  if (!scoredNodes.length && !scoredBooks.length && !fragRes.length) {
+    return `
+    <section class="section wrap fade-in">
+      <div class="sr-empty-state">
+        <div class="sr-empty-ico">🔍</div>
+        <h2>没有找到「${esc(q)}」相关内容</h2>
+        <p>试试换个关键词，比如搜「执行力」「习惯」「亲密关系」「稀缺」</p>
+        <a class="btn btn-ghost" href="#/graph" style="margin-top:16px">🕸️ 去知识网络逛逛 →</a>
+      </div>
+    </section>`;
+  }
+
+  const nodeHtml = scoredNodes.length
+    ? scoredNodes
         .map(
-          (n) => `<a class="sr-node" href="#/node/${n.id}">
+          ({ n, s }) => `<a class="sr-node" href="#/node/${n.id}">
             <span class="sr-node-title">${esc(n.title)}</span>
             <span class="sr-node-sum">${esc(n.summary)}</span>
             <span class="sr-node-meta">${(n.perspectives || []).length} 个视角 · ${(n.edges || []).length} 条连线</span>
@@ -999,8 +1103,8 @@ function viewSearch(q) {
         .join("")
     : "";
 
-  const bookHtml = bookRes.length
-    ? bookRes
+  const bookHtml = scoredBooks.length
+    ? scoredBooks
         .map(
           ({ b, i }) => `<a class="sr-book" href="#/blbook/${i}">
             ${b.cover ? `<img class="sr-book-cover" src="${esc(b.cover)}" alt="" loading="lazy">` : `<span class="sr-book-emoji">📕</span>`}
@@ -1025,14 +1129,14 @@ function viewSearch(q) {
     : "";
 
   const body = `
-    ${nodeHtml ? `<div class="sr-section"><div class="sr-sec-head"><span>🕸️</span> 知识网络主题 · ${nodeRes.length}</div><div class="sr-nodes">${nodeHtml}</div></div>` : ""}
-    ${bookHtml ? `<div class="sr-section"><div class="sr-sec-head"><span>📚</span> 书籍 · ${bookRes.length}</div><div class="sr-books">${bookHtml}</div></div>` : ""}
+    ${nodeHtml ? `<div class="sr-section"><div class="sr-sec-head"><span>🕸️</span> 知识网络主题 · ${scoredNodes.length}</div><div class="sr-nodes">${nodeHtml}</div></div>` : ""}
+    ${bookHtml ? `<div class="sr-section"><div class="sr-sec-head"><span>📚</span> 书籍 · ${scoredBooks.length}</div><div class="sr-books">${bookHtml}</div></div>` : ""}
     ${fragHtml ? `<div class="sr-section"><div class="sr-sec-head"><span>💡</span> 观点碎片 · ${fragRes.length}</div><div class="sr-frags">${fragHtml}</div></div>` : ""}
   `;
 
   return `
   <section class="section wrap fade-in">
-    <div class="search-stats-bar">「${esc(q)}」：${nodeRes.length} 主题 · ${bookRes.length} 书 · ${fragRes.length} 观点</div>
+    <div class="search-stats-bar">「${esc(q)}」：${scoredNodes.length} 主题 · ${scoredBooks.length} 书 · ${fragRes.length} 观点</div>
     ${body}
   </section>`;
 }

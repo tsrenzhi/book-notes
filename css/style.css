@@ -1281,115 +1281,164 @@ a { color: inherit; text-decoration: none; }
 }
 .mark-quote { color: var(--ink); }
 
-/* 📖 交互式学习章节 */
-.learn-chapters { margin-bottom: 36px; }
-.chapters-head {
-  display: flex; align-items: center; gap: 8px;
-  margin-bottom: 24px; padding-bottom: 14px;
+/* ==================== 课程式交互学习（参考 AI 小课件） ==================== */
+
+.course-wrap { margin-bottom: 40px; }
+
+/* 章节区标题 */
+.course-head {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 28px; padding-bottom: 16px;
   border-bottom: .5px solid var(--line);
 }
-.chapters-kicker { font-size: 18px; }
-.chapters-head h2 { font-size: 22px; font-weight: 700; margin: 0; }
-.chapters-sub { font-size: 13px; color: var(--ink-4); margin-left: auto; }
+.course-head-ico { font-size: 22px; }
+.course-head-text h2 { font-size: 22px; font-weight: 700; margin: 0 0 2px; }
+.course-head-sub { font-size: 13px; color: var(--ink-4); margin: 0; }
 
-.learn-card {
+/* ── 单节课程卡片（始终可见，非折叠）── */
+.course-chapters { display: flex; flex-direction: column; gap: 28px; }
+
+.course-chapter {
   background: var(--card); border: .5px solid var(--line);
   border-radius: var(--radius); box-shadow: var(--shadow-xs);
-  margin-bottom: 14px; transition: box-shadow .25s, border-color .25s;
   overflow: hidden;
+  transition: box-shadow .3s, transform .3s;
 }
-.learn-card:hover { box-shadow: var(--shadow-sm); border-color: var(--line-strong); }
-.learn-card > summary {
-  display: flex; align-items: center; gap: 10px;
-  padding: 18px 22px; cursor: pointer;
-  user-select: none; list-style: none;
-  transition: background .15s;
+.course-chapter:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+
+/* 章节头部：编号徽章 + 问题标题 + 引导语 */
+.course-ch-head {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 24px 24px 8px; flex-wrap: wrap;
 }
-.learn-card > summary::-webkit-details-marker { display: none; }
-.learn-card > summary:hover { background: rgba(0,0,0,.015); }
-.learn-kicker {
+.course-badge {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 30px; height: 30px; flex: none;
-  background: linear-gradient(135deg, #f0edff, #e8e4fd);
-  color: #6366f1; font-size: 13px; font-weight: 800;
-  border-radius: 8px; letter-spacing: -0.5px;
+  width: 38px; height: 38px; flex: none;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff; font-size: 15px; font-weight: 800;
+  border-radius: 10px; letter-spacing: -0.5px;
+  box-shadow: 0 2px 8px rgba(99,102,241,.28);
 }
-.learn-emoji { font-size: 19px; flex: none; }
-.learn-card > summary h3 {
-  flex: 1; font-size: 17px; font-weight: 700;
-  color: var(--ink); margin: 0; line-height: 1.3;
+.course-ch-title { flex: 1; min-width: 0; }
+.course-ch-title .course-ch-emoji { font-size: 20px; margin-right: 4px; }
+.course-ch-title h3 {
+  display: inline; font-size: 20px; font-weight: 700;
+  color: var(--ink); margin: 0; line-height: 1.35;
+  letter-spacing: -.2px;
 }
-.learn-sum {
-  font-size: 13px; color: var(--ink-4); flex: none;
-  max-width: 260px; text-align: right;
-}
-.learn-chev {
-  font-size: 12px; color: var(--ink-4); flex: none;
-  transition: transform .2s ease;
-}
-.learn-card[open] .learn-chev { transform: rotate(180deg); }
-
-.learn-body {
-  padding: 4px 22px 22px; border-top: .5px solid var(--line);
-  font-size: 15px; line-height: 1.75; color: var(--ink-2);
+.course-ch-guide {
+  font-size: 13px; color: var(--ink-4);
+  width: 100%; margin-top: 6px;
+  padding-left: 52px; /* 对齐到标题下方 */
 }
 
-/* 学习章节内部组件 */
-.learn-problem { display: flex; flex-direction: column; gap: 10px; }
-.learn-problem-q {
-  font-size: 17px; font-weight: 600; color: var(--ink);
-  line-height: 1.7; padding: 14px 18px;
-  background: linear-gradient(135deg, #fafbff, #f7f3ff);
+/* 章节正文 */
+.course-ch-body { padding: 4px 24px 24px; }
+
+/* ── Ch01 叙事块：引用式讲解 ── */
+.narrative { display: flex; flex-direction: column; gap: 12px; }
+.narrative-block {
+  padding: 18px 20px; background: linear-gradient(135deg, #fafbff, #f7f3ff);
   border-radius: var(--radius-sm); border-left: 3.5px solid #a78bfa;
 }
-.learn-problem-a, .learn-problem-bg {
-  font-size: 14.5px; line-height: 1.7; padding: 10px 16px;
-  background: rgba(0,0,0,.02); border-radius: 8px; margin: 0;
+.narrative-block p { font-size: 16px; line-height: 1.8; color: var(--ink-2); margin: 0; }
+.narrative-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 14px; line-height: 1.7; color: var(--ink-2);
+  padding: 8px 14px; background: rgba(0,0,0,.025); border-radius: 8px;
 }
-.learn-label {
-  display: inline-block; font-size: 11px; font-weight: 700;
-  letter-spacing: .5px; color: var(--ink-4); margin-right: 6px;
-}
-.learn-intro { font-size: 15px; color: var(--ink-2); line-height: 1.75; margin: 0 0 16px; }
+.narrative-label { font-size: 11px; font-weight: 700; letter-spacing: .5px; color: var(--ink-4); }
 
-.learn-vols { display: flex; flex-direction: column; gap: 12px; }
-.learn-vol {
-  display: flex; gap: 14px; align-items: flex-start;
-  padding: 14px 16px; background: rgba(0,0,0,.015);
+/* ── 洞察卡片网格（Ch01 背景项 / Ch03 观点）── */
+.insight-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 14px; }
+.insight-card {
+  padding: 16px 18px; background: rgba(0,0,0,.015);
   border-radius: var(--radius-sm); border: .5px solid var(--line);
+  transition: border-color .2s, background .2s;
 }
-.learn-vol-no {
-  flex: none; width: 32px; height: 32px; display: grid;
-  place-items: center; background: #f0edff; color: #6366f1;
-  font-size: 13px; font-weight: 800; border-radius: 8px;
-}
-.learn-vol-body h4 { font-size: 15px; font-weight: 700; color: var(--ink); margin: 0 0 6px; }
-.learn-vol-body ul { margin: 0; padding-left: 18px; }
-.learn-vol-body li { font-size: 14px; color: var(--ink-2); line-height: 1.7; margin-bottom: 3px; }
+.insight-card:hover { border-color: #a78bfa; background: #fafbff; }
+.insight-card-title { font-size: 14px; font-weight: 700; color: var(--ink); margin: 0 0 8px; }
+.insight-card-points { list-style: none; padding: 0; margin: 0; }
+.insight-card-points li { font-size: 13.5px; line-height: 1.7; color: var(--ink-2); padding-left: 14px; position: relative; margin-bottom: 4px; }
+.insight-card-points li::before { content: "•"; position: absolute; left: 0; color: #a78bfa; font-weight: 700; }
 
-.learn-takeaways { margin: 0; padding-left: 20px; }
-.learn-takeaways li {
-  font-size: 15px; color: var(--ink-2); line-height: 1.8;
-  margin-bottom: 10px; padding-left: 6px;
+/* ── Ch02 方法链：卷结构卡片 ── */
+.course-intro { font-size: 15.5px; color: var(--ink-2); line-height: 1.75; margin: 0 0 18px; }
+.method-chain { display: flex; flex-direction: column; gap: 10px; }
+.method-card {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 16px 18px; background: var(--bg);
+  border-radius: var(--radius-sm); border: .5px solid var(--line);
+  transition: border-color .25s, box-shadow .25s, transform .25s;
+  animation: cardIn .35s ease both; animation-delay: var(--delay, 0s);
 }
+.method-card:hover { border-color: #6366f1; box-shadow: var(--shadow-xs); transform: translateX(4px); }
+@keyframes cardIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.method-card-no {
+  flex: none; width: 34px; height: 34px; display: grid; place-items: center;
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+  color: #4f46e5; font-size: 12px; font-weight: 800; border-radius: 9px;
+}
+.method-card-body h4 { font-size: 15.5px; font-weight: 700; color: var(--ink); margin: 0 0 6px; }
+.method-card-desc { font-size: 13.5px; line-height: 1.7; color: var(--ink-3); margin: 0; }
 
-.read-col { margin-bottom: 14px; }
-.read-col:last-child { margin-bottom: 0; }
-.read-h {
-  font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 8px;
+/* ── Ch03 颠覆性观点：洞察卡片 ── */
+.takeaway-grid { display: flex; flex-direction: column; gap: 10px; }
+.takeaway-card {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 14px 18px; background: var(--card);
+  border-radius: var(--radius-sm); border: .5px solid var(--line);
+  border-left: 3px solid #f59e0b;
+  transition: border-color .2s, background .2s, transform .2s;
+  animation: cardIn .3s ease both; animation-delay: var(--delay, 0s);
 }
-.read-item {
-  font-size: 14px; color: var(--ink-2); line-height: 1.7;
-  padding: 8px 14px; background: rgba(0,0,0,.02);
-  border-radius: 8px; margin-bottom: 6px;
-}
+.takeaway-card:hover { border-left-color: #d97706; background: #fffbeb; transform: translateX(3px); }
+.takeaway-icon { font-size: 17px; flex: none; margin-top: 1px; }
+.takeaway-text { font-size: 14.5px; line-height: 1.75; color: var(--ink-2); margin: 0; }
 
-.learn-limits {
-  font-size: 15px; line-height: 1.8; color: var(--ink-2);
+/* ── Ch04 怎么读：策略卡片 ── */
+.read-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.read-card {
+  padding: 16px 18px; border-radius: var(--radius-sm);
+  border: .5px solid var(--line); transition: border-color .2s;
+}
+.read-card:hover { border-color: var(--line-strong); }
+.read-must { background: linear-gradient(135deg, #ecfdf5, #f0fdf4); border-left: 3px solid #22c55e; }
+.read-skip { background: linear-gradient(135deg, #fefce8, #fef9c3); border-left: 3px solid #eab308; }
+.read-order { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-left: 3px solid #3b82f6; }
+.read-card-icon { font-size: 16px; margin-right: 4px; }
+.read-card strong { font-size: 14px; color: var(--ink); }
+.read-card ul { margin: 8px 0 0; padding-left: 18px; }
+.read-card li { font-size: 13.5px; line-height: 1.7; color: var(--ink-2); margin-bottom: 3px; }
+.read-card p { font-size: 13.5px; line-height: 1.7; color: var(--ink-2); margin: 6px 0 0; }
+
+/* ── Ch05 局限与边界 ── */
+.limit-grid { display: flex; flex-direction: column; gap: 10px; }
+.limit-card {
+  display: flex; gap: 10px; align-items: flex-start;
   padding: 14px 18px; background: #fffbeb;
-  border-radius: var(--radius-sm); border-left: 3.5px solid #f59e0b;
-  margin: 0;
+  border-radius: var(--radius-sm); border: .5px solid #fde68a;
+  transition: background .2s, transform .2s;
+  animation: cardIn .3s ease both; animation-delay: var(--delay, 0s);
 }
+.limit-card:hover { background: #fef3c7; transform: translateX(3px); }
+.limit-icon { font-size: 16px; flex: none; }
+.limit-card p { font-size: 14px; line-height: 1.7; color: var(--ink-2); margin: 0; }
+
+/* ── 底部进度导航条 ── */
+.course-progress {
+  display: flex; justify-content: center; gap: 8px;
+  margin-top: 32px; padding-top: 20px; border-top: .5px solid var(--line);
+}
+.progress-dot {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bg); border: 1.5px solid var(--line-strong);
+  color: var(--ink-3); font-size: 12px; font-weight: 700;
+  text-decoration: none; transition: all .2s;
+}
+.progress-dot:hover { background: #6366f1; color: #fff; border-color: #6366f1; transform: scale(1.1); }
+.dot-num { font-size: 11px; }
 
 @media (max-width: 720px) {
   .bl-hero-new { flex-direction: column; align-items: center; text-align: center; }
@@ -1398,9 +1447,14 @@ a { color: inherit; text-decoration: none; }
   .bl-hero-info h1 { font-size: 24px; }
   .speed-head { padding: 14px 16px 12px; }
   .speed-body { padding: 2px 16px 16px; }
-  .learn-card > summary { padding: 14px 16px; }
-  .learn-body { padding: 2px 16px 16px; }
-  .learn-sum { display: none; } /* 手机端隐藏摘要，省空间 */
+  .course-ch-head { padding: 18px 16px 6px; }
+  .course-ch-body { padding: 2px 16px 18px; }
+  .course-ch-guide { padding-left: 0; }
+  .course-badge { width: 34px; height: 34px; font-size: 14px; }
+  .course-ch-title h3 { font-size: 17px; }
+  .insight-grid { grid-template-columns: 1fr; }
+  .read-grid { grid-template-columns: 1fr; }
+  .method-card-no { width: 30px; height: 30px; font-size: 11px; }
   .node-head h1 { font-size: 26px; }
   .bl-related { padding: 22px 18px; }
   .bl-rel-head h2 { font-size: 18px; }
