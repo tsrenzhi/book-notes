@@ -1298,11 +1298,32 @@ function viewGraph() {
   </section>`;
 }
 
+/* ---------- 用户补充内容加载（独立 JSON / 可自助维护） ---------- */
+const USER_CONTENT_CACHE = {};
+async function loadUserContent(nodeId) {
+  if (USER_CONTENT_CACHE[nodeId] !== undefined) return USER_CONTENT_CACHE[nodeId];
+  try {
+    const r = await fetch(`data/user-content/${nodeId}.json`, { cache: "no-store" });
+    if (!r.ok) {
+      USER_CONTENT_CACHE[nodeId] = null;
+      return null;
+    }
+    const data = await r.json();
+    USER_CONTENT_CACHE[nodeId] = data;
+    return data;
+  } catch (e) {
+    USER_CONTENT_CACHE[nodeId] = null;
+    return null;
+  }
+}
+
 /* ---------- 节点详情（第二大脑） ---------- */
-function viewNode(id) {
+async function viewNode(id) {
   if (typeof KNOWLEDGE_NODES === "undefined") return notFound();
   const n = KNOWLEDGE_NODES.find((x) => x.id === id);
   if (!n) return notFound();
+  /* 加载该节点的"用户补充内容"（独立 JSON，可自助维护） */
+  const userContent = await loadUserContent(id);
   const edgeHtml = (n.edges || [])
     .map((e) => {
       const to = KNOWLEDGE_NODES.find((x) => x.id === e.to);
@@ -1330,30 +1351,61 @@ function viewNode(id) {
   const nuance = group("nuance", "🟡 补充 / 边界");
   const conflict = group("conflict", "🔥 冲突 / 不同声音");
 
-  /* 🧠 IMA 知识库实操方法（部分节点有额外方法论补充） */
-  let imaMethodsHtml = "";
-  if (id === "executive") {
-    imaMethodsHtml = `
+  /* 节点专属：补充方法论（5 个立刻能上手的做法） */
+  /* 优先从 data/user-content/{id}.json 加载，用户可自助维护；缺失则用兜底 */
+  let extraMethodsHtml = "";
+  const buildMethodsHtml = (data) => {
+    if (!data || !data.items || !data.items.length) return "";
+    const secTitle = data.sectionTitle || "补充方法论";
+    const cards = data.items.map((it) => `
+        <div class="ima-card">
+          <span class="ima-card-no">${esc(it.no || "")}</span>
+          <h4>${esc(it.title || "")}</h4>
+          ${it.body ? `<p>${esc(it.body)}</p>` : ""}
+          ${it.action ? `<p class="ima-action">${esc(it.action)}</p>` : ""}
+        </div>`).join("");
+    return `
     <div class="ima-methods">
-      <div class="ima-head">🧠 来自我的知识库 · 提高执行力的具体方法</div>
+      <div class="ima-head">${esc(secTitle)}</div>
+      <div class="ima-cards">${cards}</div>
+    </div>`;
+  };
+  extraMethodsHtml = buildMethodsHtml(userContent);
+  /* 兜底：若 JSON 加载失败或为空，保留硬编码内容（防止空白） */
+  if (!extraMethodsHtml && id === "executive") {
+    extraMethodsHtml = `
+    <div class="ima-methods">
+      <div class="ima-head">5 个立刻能上手的做法</div>
       <div class="ima-cards">
         <div class="ima-card">
           <span class="ima-card-no">01</span>
-          <h4>少看让你爽的短视频</h4>
-          <p>短视频是精神鸦片——每5~10秒一个情绪刺激，让大脑习惯被动兴奋。结果现实中做选择时觉得"不够爽"就不动了。</p>
-          <p class="ima-action"><strong>做法：</strong>每天给自己设「无视频专注时段」，从30分钟开始，逐步延长到2小时。</p>
+          <h4>目标可视化</h4>
+          <p>就是得让自己经常看见自己的目标。就拿我减肥来说吧，我每天都会做得一件事，就是去称体重。这其实就是把我的目标可视化了，让我每天都能看见自己跟目标之间的差距。</p>
+          <p class="ima-action">生活里这样的例子还有很多：倒计时、deadline（截止时间）、签到打卡，都是把目标可视化了。底层逻辑就是，通过这个目标来不断地提醒你，让你看到你跟目标之间的差距。</p>
         </div>
         <div class="ima-card">
           <span class="ima-card-no">02</span>
-          <h4>把自己当机器：埋头莽干 = 专注力</h4>
-          <p>别等心情好了再干——那是别人给你套的思维牢笼。规划对了就执行，大脑喜欢简单，越蛮干越能释放负压。</p>
-          <p class="ima-action"><strong>做法：</strong>下达命令→设定时限→无视情绪开干。不管心情好坏，先动起来再说。</p>
+          <h4>先上船，再补票</h4>
+          <p>就拿找工作来说，别总想着"等我准备好了，等我把简历改好了，再去投"——而是先投了再说。万一瞎猫碰上死耗子呢？万一直接被录取了呢？</p>
+          <p class="ima-action">就算被拒了又怎么样？你起码知道自己哪里做得不够好。想提高执行力，就得硬着头皮上，让自己上船，再补票。</p>
         </div>
         <div class="ima-card">
           <span class="ima-card-no">03</span>
-          <h4>正向复盘，打破内耗循环</h4>
-          <p>执行力跟不上认知 → 认知变内耗 → 越内耗越没底气 → 越没底气越不动。打破它的钥匙是复盘。</p>
-          <p class="ima-action"><strong>做法：</strong>每晚3分钟：①今天做成了什么（继续保持）②哪里可以改进③明天最重要的一件事。</p>
+          <h4>降低对自己的要求</h4>
+          <p>大部分人的拖延症，其实都是完美主义害的。也就是，你对自己的要求太高了。你越想做得好，就越是拖着，结果就是迟迟不敢开始。</p>
+          <p class="ima-action">想要提高执行力，就得放弃完美主义，让自己先完成，再完美。</p>
+        </div>
+        <div class="ima-card">
+          <span class="ima-card-no">04</span>
+          <h4>降低做事的门槛</h4>
+          <p>就是得想办法，降低自己做成一件事的难度，保证你一定能完成它。</p>
+          <p class="ima-action">就拿健身来说，你不用一开始就想着要健身一个小时，而是先去做 1 个俯卧撑，一天就做一个，这不难吧？</p>
+        </div>
+        <div class="ima-card">
+          <span class="ima-card-no">05</span>
+          <h4>执行力是做出来的</h4>
+          <p>就拿我拍短视频来说，我就发现啊，我越是经常拍，我的执行力就越强。而一旦因为某个事，打乱了我的节奏，我的执行力就变差了，我就懒得拍了。</p>
+          <p class="ima-action">为什么会这样呢？因为习惯会让一个人做事上瘾。你之所以会坚持某个习惯，就是因为这个习惯会给你带来某个确定的好处，你才愿意去坚持。想要提高执行力，很重要的一点就是大量地去做，大量地去执行——你做得越多，你的执行力就越强。</p>
         </div>
       </div>
     </div>`;
@@ -1371,7 +1423,7 @@ function viewNode(id) {
     </div>
     ${edgeHtml ? `<div class="node-edges"><div class="ne-label">关联主题</div><div class="ne-list">${edgeHtml}</div></div>` : ""}
     ${support}${nuance}${conflict}
-    ${imaMethodsHtml}
+    ${extraMethodsHtml}
     <div class="node-foot"><a class="btn btn-ghost" href="#/graph">🕸️ 回到知识图谱</a></div>
   </section>`;
 }
@@ -1410,7 +1462,19 @@ function router() {
       case "about":       html = viewAbout(); route = "about"; break;
       case "search":      html = viewSearch(decodeURIComponent(parts.slice(1).join("/"))); route = "search"; break;
       case "graph":       html = viewGraph(); route = "graph"; break;
-      case "node":        html = viewNode(parts[1]); route = "node"; break;
+      case "node":
+        /* 节点页可能含异步加载的用户内容 */
+        viewNode(parts[1]).then((h) => {
+          app.innerHTML = h;
+          window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+          document.querySelectorAll("#mainNav a").forEach((a) =>
+            a.classList.toggle("active", a.dataset.route === "node")
+          );
+          const gs = document.getElementById("globalSearch");
+          if (gs) gs.value = "";
+          document.getElementById("mainNav").classList.remove("open");
+        });
+        return;
       default:            html = notFound();
     }
   }
